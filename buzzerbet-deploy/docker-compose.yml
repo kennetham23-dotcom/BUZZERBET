@@ -1,0 +1,125 @@
+version: '3.9'
+
+services:
+  # ── MySQL Database ────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: buzzerbet-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-changeme_root}
+      MYSQL_DATABASE:      ${DB_NAME:-buzzerbet}
+      MYSQL_USER:          ${DB_USER:-buzzerbet}
+      MYSQL_PASSWORD:      ${DB_PASSWORD:-changeme_db}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"   # remove this line in production (DB not needed externally)
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-changeme_root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - buzzerbet-net
+
+  # ── Run DB migrations (runs once, then exits) ─
+  migrate:
+    build: .
+    container_name: buzzerbet-migrate
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST:     db
+      DB_PORT:     3306
+      DB_USER:     ${DB_USER:-buzzerbet}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme_db}
+      DB_NAME:     ${DB_NAME:-buzzerbet}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+    command: sh -c "node backend/config/migrate.js && node backend/config/migrate-admin.js"
+    networks:
+      - buzzerbet-net
+
+  # ── BuzzerBet App ─────────────────────────────
+  app:
+    build: .
+    container_name: buzzerbet-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV:    ${NODE_ENV:-production}
+      PORT:        3000
+      CLIENT_URL:  ${CLIENT_URL:-*}
+
+      # Database
+      DB_HOST:     db
+      DB_PORT:     3306
+      DB_USER:     ${DB_USER:-buzzerbet}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme_db}
+      DB_NAME:     ${DB_NAME:-buzzerbet}
+
+      # Auth
+      JWT_SECRET:      ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRES_IN:  ${JWT_EXPIRES_IN:-7d}
+
+      # Payments (optional at launch — app runs without them)
+      MTN_BASE_URL:                       ${MTN_BASE_URL:-}
+      MTN_COLLECTION_SUBSCRIPTION_KEY:    ${MTN_COLLECTION_SUBSCRIPTION_KEY:-}
+      MTN_DISBURSEMENT_SUBSCRIPTION_KEY:  ${MTN_DISBURSEMENT_SUBSCRIPTION_KEY:-}
+      MTN_COLLECTION_API_USER:            ${MTN_COLLECTION_API_USER:-}
+      MTN_COLLECTION_API_KEY:             ${MTN_COLLECTION_API_KEY:-}
+      MTN_DISBURSEMENT_API_USER:          ${MTN_DISBURSEMENT_API_USER:-}
+      MTN_DISBURSEMENT_API_KEY:           ${MTN_DISBURSEMENT_API_KEY:-}
+      MTN_ENVIRONMENT:                    ${MTN_ENVIRONMENT:-sandbox}
+      VODAFONE_BASE_URL:                  ${VODAFONE_BASE_URL:-}
+      VODAFONE_CLIENT_ID:                 ${VODAFONE_CLIENT_ID:-}
+      VODAFONE_CLIENT_SECRET:             ${VODAFONE_CLIENT_SECRET:-}
+      VODAFONE_MERCHANT_ID:               ${VODAFONE_MERCHANT_ID:-}
+      AIRTELTIGO_BASE_URL:                ${AIRTELTIGO_BASE_URL:-}
+      AIRTELTIGO_CLIENT_ID:               ${AIRTELTIGO_CLIENT_ID:-}
+      AIRTELTIGO_CLIENT_SECRET:           ${AIRTELTIGO_CLIENT_SECRET:-}
+      AIRTELTIGO_COUNTRY:                 ${AIRTELTIGO_COUNTRY:-GH}
+      AIRTELTIGO_CURRENCY:                ${AIRTELTIGO_CURRENCY:-GHS}
+      STRIPE_SECRET_KEY:                  ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET:              ${STRIPE_WEBHOOK_SECRET:-}
+
+      # Push notifications (optional)
+      VAPID_PUBLIC_KEY:  ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+
+      # Premium pricing
+      PREMIUM_SILVER_PRICE: ${PREMIUM_SILVER_PRICE:-29}
+      PREMIUM_BRONZE_PRICE: ${PREMIUM_BRONZE_PRICE:-49}
+      PREMIUM_GOLD_PRICE:   ${PREMIUM_GOLD_PRICE:-79}
+
+      # Game config
+      GAME_DURATION_SECONDS: ${GAME_DURATION_SECONDS:-60}
+      MATCHMAKING_TIMEOUT_MS: ${MATCHMAKING_TIMEOUT_MS:-30000}
+      MIN_STAKE: ${MIN_STAKE:-1}
+      MAX_STAKE: ${MAX_STAKE:-10000}
+
+    volumes:
+      - app_logs:/app/logs
+    networks:
+      - buzzerbet-net
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  db_data:
+  app_logs:
+
+networks:
+  buzzerbet-net:
+    driver: bridge

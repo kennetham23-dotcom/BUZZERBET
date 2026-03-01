@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuzzerBet · Admin</title>
+<script>window.BB_API = '';</script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#08090f; --bg2:#0d0f1a; --bg3:#121422; --bg4:#181b2e;
+  --border:rgba(255,255,255,0.07);
+  --gold:#f5c842; --gold2:#e8a800;
+  --green:#22d98a; --red:#ff4560; --blue:#4c8dff;
+  --purple:#a78bfa; --orange:#ff7c3a;
+  --text:#e8eaf0; --muted:#4a4f6a; --muted2:#7a7f9a;
+  --sidebar-w:220px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;display:flex;font-size:13px;}
+
+/* ── AUTH OVERLAY ── */
+#auth-overlay{
+  position:fixed;inset:0;z-index:9000;
+  background:radial-gradient(ellipse 60% 50% at 50% 30%,#1a1a35,#08090f);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+}
+#auth-overlay.hidden{display:none;}
+.auth-logo{font-family:'Syne';font-size:28px;font-weight:800;color:var(--gold);letter-spacing:4px;}
+.auth-sub{font-size:10px;color:var(--muted2);letter-spacing:3px;text-transform:uppercase;}
+.auth-box{
+  background:var(--bg2);border:1px solid rgba(245,200,66,.2);border-radius:16px;
+  padding:28px 24px;width:min(360px,90vw);margin-top:8px;
+}
+.auth-field{margin-bottom:14px;}
+.auth-label{display:block;font-size:10px;color:var(--muted2);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.auth-input{
+  width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:8px;padding:11px 14px;color:var(--text);font-family:'DM Mono';
+  font-size:13px;outline:none;transition:border-color .2s;
+}
+.auth-input:focus{border-color:var(--gold);}
+.auth-btn{
+  width:100%;padding:12px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#08090f;font-family:'Syne';font-size:13px;font-weight:700;letter-spacing:2px;
+  cursor:pointer;transition:filter .2s;margin-top:4px;
+}
+.auth-btn:hover{filter:brightness(1.1);}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;}
+.auth-err{color:var(--red);font-size:11px;text-align:center;margin-bottom:12px;display:none;}
+.auth-err.show{display:block;}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:var(--sidebar-w);height:100vh;background:var(--bg2);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;
+  position:relative;z-index:10;
+}
+.sb-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border);}
+.sb-logo-text{font-family:'Syne';font-size:20px;font-weight:800;color:var(--gold);letter-spacing:2px;}
+.sb-logo-sub{font-size:9px;color:var(--muted2);letter-spacing:3px;margin-top:2px;}
+.sb-section{padding:16px 12px 8px;}
+.sb-section-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:0 8px;margin-bottom:6px;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+  cursor:pointer;color:var(--muted2);transition:all .18s;margin-bottom:2px;font-size:12px;
+}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text);}
+.nav-item.active{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.2);}
+.nav-ico{font-size:15px;width:20px;text-align:center;}
+.sb-bottom{margin-top:auto;padding:16px;border-top:1px solid var(--border);}
+.admin-pill{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:var(--bg3);border-radius:12px;border:1px solid var(--border);
+}
+.admin-avatar{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne';font-weight:800;font-size:12px;color:#08090f;
+}
+.admin-name{font-size:11px;color:var(--text);font-weight:500;}
+.admin-role{font-size:9px;color:var(--muted2);margin-top:1px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:livePulse 2s infinite;margin-left:auto;}
+@keyframes livePulse{50%{opacity:.3}}
+
+/* ── MAIN ── */
+#main{
+  flex:1;height:100vh;overflow-y:auto;overflow-x:hidden;
+  background:radial-gradient(ellipse 60% 40% at 80% 0%,rgba(245,200,66,.04) 0%,transparent 60%),var(--bg);
+}
+#topbar{
+  position:sticky;top:0;z-index:50;height:58px;
+  background:rgba(8,9,15,.92);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);display:flex;align-items:center;padding:0 28px;gap:16px;
+}
+.page-title{font-family:'Syne';font-size:16px;font-weight:700;color:var(--text);flex:1;}
+.tb-time{font-size:11px;color:var(--muted2);letter-spacing:1px;}
+.tb-badge{
+  background:var(--red);color:#fff;font-size:9px;font-weight:700;
+  padding:3px 8px;border-radius:999px;letter-spacing:1px;animation:badgePulse 2s infinite;
+}
+@keyframes badgePulse{50%{opacity:.6}}
+.tb-btn{
+  padding:7px 14px;border:1px solid var(--border);border-radius:8px;
+  background:transparent;color:var(--muted2);font-family:'DM Mono';font-size:11px;
+  cursor:pointer;transition:all .2s;
+}
+.tb-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+/* ── PAGES ── */
+.page{display:none;padding:24px 28px;}
+.page.active{display:block;}
+
+/* ── STAT CARDS ── */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+@media(max-width:1100px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:16px;
+  padding:20px;position:relative;overflow:hidden;transition:border-color .2s;
+}
+.stat-card:hover{border-color:rgba(255,255,255,.14);}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--accent-color,var(--gold));opacity:.7;
+}
+.stat-label{font-size:10px;color:var(--muted2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+.stat-value{font-family:'Syne';font-size:28px;font-weight:800;color:var(--text);line-height:1;margin-bottom:8px;}
+.stat-delta{font-size:11px;display:flex;align-items:center;gap:4px;}
+.delta-up{color:var(--green);}
+.delta-down{color:var(--red);}
+.stat-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:32px;opacity:.12;}
+
+/* ── CHARTS ── */
+.chart-grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:24px;}
+@media(max-width:1100px){.chart-grid{grid-template-columns:1fr;}}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:20px;}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.chart-title{font-family:'Syne';font-size:14px;font-weight:700;color:var(--text);}
+.chart-sub{font-size:11px;color:var(--muted2);margin-top:2px;}
+.period-tabs{display:flex;gap:4px;background:var(--bg);border-radius:8px;padding:3px;}
+.pt{
+  padding:5px 10px;border-radius:6px;border:none;background:transparent;
+  color:var(--muted2);font-family:'DM Mono';font-size:10px;cursor:pointer;transition:all .15s;
+}
+.pt.active{background:var(--bg3);color:var(--gold);}
+canvas{display:block;width:100%;}
+.donut-wrap{display:flex;align-items:center;gap:20px;}
+.donut-legend{flex:1;}
+.dl-item{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:11px;}
+.dl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dl-name{color:var(--muted2);flex:1;}
+.dl-val{color:var(--text);font-weight:500;}
+
+/* ── TABLES ── */
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px;}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border);}
+.table-actions{display:flex;gap:8px;align-items:center;}
+.search-box{
+  padding:7px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:'DM Mono';font-size:11px;outline:none;width:180px;transition:border-color .2s;
+}
+.search-box:focus{border-color:var(--gold);}
+.search-box::placeholder{color:var(--muted);}
+table{width:100%;border-collapse:collapse;}
+th{
+  text-align:left;padding:10px 20px;font-size:9px;color:var(--muted);
+  letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.02);font-weight:400;
+}
+td{padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:10px;font-weight:500;letter-spacing:.5px;}
+.badge-green {background:rgba(34,217,138,.12);color:var(--green);border:1px solid rgba(34,217,138,.2);}
+.badge-red   {background:rgba(255,69,96,.12); color:var(--red);  border:1px solid rgba(255,69,96,.2);}
+.badge-gold  {background:rgba(245,200,66,.1); color:var(--gold); border:1px solid rgba(245,200,66,.2);}
+.badge-blue  {background:rgba(76,141,255,.12);color:var(--blue); border:1px solid rgba(76,141,255,.2);}
+.badge-purple{background:rgba(167,139,250,.12);color:var(--purple);border:1px solid rgba(167,139,250,.2);}
+.badge-muted {background:rgba(255,255,255,.05);color:var(--muted2);border:1px solid var(--border);}
+.action-btn{
+  padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:transparent;
+  color:var(--muted2);font-family:'DM Mono';font-size:10px;cursor:pointer;transition:all .15s;margin-left:4px;
+}
+.action-btn:hover{border-color:var(--gold);color:var(--gold);}
+.action-btn.danger:hover{border-color:var(--red);color:var(--red);}
+.action-btn:disabled{opacity:.4;cursor:not-allowed;}
+.uavatar{
+  width:28px;height:28px;border-radius:8px;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-family:'Syne';font-size:11px;font-weight:800;margin-right:8px;vertical-align:middle;
+}
+.live-game-row td{background:rgba(34,217,138,.03);}
+
+/* ── LIVE FEED ── */
+#live-feed{max-height:320px;overflow-y:auto;}
+.feed-item{display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);animation:feedIn .3s ease;}
+@keyframes feedIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.feed-item:last-child{border-bottom:none;}
+.feed-ico{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.feed-body{flex:1;}
+.feed-title{font-size:12px;color:var(--text);margin-bottom:2px;}
+.feed-time{font-size:10px;color:var(--muted2);}
+
+/* ── PAGINATION ── */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);font-size:11px;color:var(--muted2);}
+.pg-btns{display:flex;gap:4px;}
+.pg-btn{
+  width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:transparent;
+  color:var(--muted2);font-family:'DM Mono';font-size:11px;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;
+}
+.pg-btn:hover,.pg-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(245,200,66,.08);}
+
+/* ── USER DETAIL MODAL ── */
+.modal-ovl{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-ovl.show{opacity:1;pointer-events:all;}
+.modal-box{
+  background:var(--bg2);border:1px solid rgba(255,255,255,.12);border-radius:20px;
+  padding:28px;width:min(520px,92vw);box-shadow:0 24px 64px rgba(0,0,0,.8);
+  max-height:90vh;overflow-y:auto;
+}
+.modal-box h3{font-family:'Syne';font-size:16px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.modal-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.modal-row:last-of-type{border-bottom:none;}
+.modal-row .lbl{color:var(--muted2);}
+.modal-row .val{color:var(--text);font-weight:500;}
+.modal-actions{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap;}
+.modal-btn{padding:9px 16px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--muted2);font-family:'DM Mono';font-size:11px;cursor:pointer;transition:all .2s;}
+.modal-btn:hover{border-color:var(--gold);color:var(--gold);}
+.modal-btn.danger{color:var(--red);border-color:rgba(255,69,96,.3);}
+.modal-btn.danger:hover{background:rgba(255,69,96,.1);border-color:var(--red);}
+.modal-btn.primary{background:rgba(245,200,66,.1);border-color:var(--gold);color:var(--gold);}
+.modal-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* balance adjust input */
+.bal-input{
+  background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  padding:6px 10px;color:var(--text);font-family:'DM Mono';font-size:12px;
+  width:100px;outline:none;
+}
+.bal-input:focus{border-color:var(--gold);}
+
+/* ── TOAST ── */
+.adm-toast{
+  position:fixed;bottom:20px;right:20px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:12px;padding:12px 18px;font-size:12px;z-index:999;
+  display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.6);
+  animation:slideIn .3s ease,slideOut .3s ease 2.5s forwards;pointer-events:none;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes slideOut{to{opacity:0;transform:translateY(-8px)}}
+
+/* loading spinner */
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted2);}
+.spin{width:24px;height:24px;border:2px solid rgba(245,200,66,.2);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin-right:12px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ═══════ AUTH OVERLAY ═══════ -->
+<div id="auth-overlay">
+  <div class="auth-logo">BUZZERBET</div>
+  <div class="auth-sub">Admin Console</div>
+  <div class="auth-box">
+    <div class="auth-err" id="auth-err"></div>
+    <div class="auth-field">
+      <label class="auth-label">Admin Email</label>
+      <input class="auth-input" id="adm-email" type="email" placeholder="admin@buzzerbet.com" autocomplete="email">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label">Password</label>
+      <input class="auth-input" id="adm-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="auth-btn" id="adm-login-btn" onclick="adminLogin()">ACCESS CONSOLE</button>
+  </div>
+</div>
+
+<!-- ═══════ SIDEBAR ═══════ -->
+<nav id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-text">BUZZERBET</div>
+    <div class="sb-logo-sub">ADMIN CONSOLE</div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-section-label">Overview</div>
+    <div class="nav-item active" onclick="nav('overview',this)"><span class="nav-ico">▦</span> Dashboard</div>
+    <div class="nav-item" onclick="nav('live',this)"><span class="nav-ico">⚡</span> Live Games<span class="live-dot"></span></div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-section-label">Management</div>
+    <div class="nav-item" onclick="nav('users',this)"><span class="nav-ico">👤</span> Users</div>
+    <div class="nav-item" onclick="nav('transactions',this)"><span class="nav-ico">₵</span> Transactions</div>
+    <div class="nav-item" onclick="nav('games',this)"><span class="nav-ico">🎮</span> Game History</div>
+    <div class="nav-item" onclick="nav('premium',this)"><span class="nav-ico">👑</span> Subscriptions</div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-section-label">System</div>
+    <div class="nav-item" onclick="nav('settings',this)"><span class="nav-ico">⚙</span> Settings</div>
+  </div>
+  <div class="sb-bottom">
+    <div class="admin-pill">
+      <div class="admin-avatar" id="sb-avatar">A</div>
+      <div>
+        <div class="admin-name" id="sb-name">Admin</div>
+        <div class="admin-role" id="sb-email">—</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════ MAIN ═══════ -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="page-title" id="page-title">Dashboard</div>
+    <span class="tb-time" id="tb-clock">—</span>
+    <span class="tb-badge" id="live-count">0 LIVE</span>
+    <button class="tb-btn" onclick="refreshData()">↺ Refresh</button>
+    <button class="tb-btn" onclick="adminLogout()" style="color:var(--red);border-color:rgba(255,69,96,.2)">Logout</button>
+  </div>
+
+  <!-- ══ OVERVIEW ══ -->
+  <div class="page active" id="page-overview">
+    <div class="stat-grid">
+      <div class="stat-card" style="--accent-color:var(--gold)">
+        <div class="stat-label">Premium Revenue</div>
+        <div class="stat-value" id="s-revenue">—</div>
+        <div class="stat-delta" id="s-revenue-sub">From subscriptions</div>
+        <div class="stat-icon">₵</div>
+      </div>
+      <div class="stat-card" style="--accent-color:var(--green)">
+        <div class="stat-label">Active Users</div>
+        <div class="stat-value" id="s-users">—</div>
+        <div class="stat-delta" id="s-users-sub">Registered accounts</div>
+        <div class="stat-icon">👥</div>
+      </div>
+      <div class="stat-card" style="--accent-color:var(--blue)">
+        <div class="stat-label">Total Games Played</div>
+        <div class="stat-value" id="s-games">—</div>
+        <div class="stat-delta" id="s-games-sub">All time</div>
+        <div class="stat-icon">🎮</div>
+      </div>
+      <div class="stat-card" style="--accent-color:var(--purple)">
+        <div class="stat-label">Premium Subs</div>
+        <div class="stat-value" id="s-subs">—</div>
+        <div class="stat-delta" id="s-subs-sub">Active plans</div>
+        <div class="stat-icon">👑</div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div><div class="chart-title">Deposits & Games</div><div class="chart-sub" id="chart-range">7-day overview</div></div>
+          <div class="period-tabs">
+            <button class="pt active" onclick="setPeriod('7d',this)">7D</button>
+            <button class="pt" onclick="setPeriod('30d',this)">30D</button>
+            <button class="pt" onclick="setPeriod('90d',this)">90D</button>
+          </div>
+        </div>
+        <canvas id="revenue-chart" height="180"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div><div class="chart-title">Payment Split</div><div class="chart-sub">By provider</div></div>
+        </div>
+        <div class="donut-wrap">
+          <canvas id="donut-chart" width="120" height="120" style="flex-shrink:0"></canvas>
+          <div class="donut-legend" id="donut-legend"><div class="loading" style="padding:10px"><div class="spin"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="table-card">
+        <div class="table-header"><div class="chart-title">Recent Games</div></div>
+        <table>
+          <thead><tr><th>Players</th><th>Stake</th><th>Score</th><th>Winner</th><th>Status</th></tr></thead>
+          <tbody id="recent-games-tbody"><tr><td colspan="5" class="loading"><div class="spin"></div>Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">Live Feed</div><span class="live-dot"></span></div>
+        <div id="live-feed"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LIVE GAMES ══ -->
+  <div class="page" id="page-live">
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card" style="--accent-color:var(--green)">
+        <div class="stat-label">Games In Progress</div>
+        <div class="stat-value" id="live-count-big">0</div>
+        <div class="stat-delta">Real-time</div>
+        <div class="stat-icon">⚡</div>
+      </div>
+      <div class="stat-card" style="--accent-color:var(--blue)">
+        <div class="stat-label">Players Online</div>
+        <div class="stat-value" id="live-players">0</div>
+        <div class="stat-delta">In active games</div>
+        <div class="stat-icon">📡</div>
+      </div>
+      <div class="stat-card" style="--accent-color:var(--orange)">
+        <div class="stat-label">GH₵ At Stake</div>
+        <div class="stat-value" id="live-stake">GH₵0</div>
+        <div class="stat-delta">Currently locked</div>
+        <div class="stat-icon">💰</div>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        <div class="chart-title">Active Games</div>
+        <span class="live-dot"></span>
+      </div>
+      <table>
+        <thead><tr><th>Game ID</th><th>Player 1</th><th>Player 2</th><th>Stake</th><th>Score</th><th>Elapsed</th><th>Action</th></tr></thead>
+        <tbody id="live-tbody"><tr><td colspan="7" class="loading"><div class="spin"></div>Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ USERS ══ -->
+  <div class="page" id="page-users">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="chart-title">All Users</div>
+        <div class="table-actions">
+          <select class="search-box" id="user-status-filter" onchange="loadUsers(1)" style="width:110px">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="banned">Banned</option>
+          </select>
+          <input class="search-box" id="user-search" placeholder="Search name / email…" oninput="debounceSearch()">
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>User</th><th>Balance</th><th>W/L</th><th>Plan</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="users-tbody"><tr><td colspan="7" class="loading"><div class="spin"></div>Loading…</td></tr></tbody>
+      </table>
+      <div class="pagination">
+        <span id="users-count">—</span>
+        <div class="pg-btns" id="users-pg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TRANSACTIONS ══ -->
+  <div class="page" id="page-transactions">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="chart-title">All Transactions</div>
+        <div class="table-actions">
+          <input class="search-box" id="tx-user-filter" placeholder="Filter by user…" oninput="loadTransactions(1)" style="width:140px">
+          <select class="search-box" id="tx-type-filter" onchange="loadTransactions(1)" style="width:120px">
+            <option value="">All Types</option>
+            <option value="deposit">Deposits</option>
+            <option value="withdrawal">Withdrawals</option>
+            <option value="stake">Stakes</option>
+            <option value="winnings">Winnings</option>
+            <option value="premium">Premium</option>
+            <option value="refund">Refunds</option>
+          </select>
+          <select class="search-box" id="tx-status-filter" onchange="loadTransactions(1)" style="width:110px">
+            <option value="">All Status</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>User</th><th>Type</th><th>Amount</th><th>Provider</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="tx-tbody"><tr><td colspan="7" class="loading"><div class="spin"></div>Loading…</td></tr></tbody>
+      </table>
+      <div class="pagination">
+        <span id="tx-count">—</span>
+        <div class="pg-btns" id="tx-pg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GAME HISTORY ══ -->
+  <div class="page" id="page-games">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="chart-title">Game History</div>
+        <div class="table-actions">
+          <select class="search-box" id="games-status-filter" onchange="loadGames(1)" style="width:120px">
+            <option value="">All Status</option>
+            <option value="finished">Finished</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Game ID</th><th>Player 1</th><th>Player 2</th><th>Stake</th><th>Scores</th><th>Winner</th><th>Date</th></tr></thead>
+        <tbody id="games-tbody"><tr><td colspan="7" class="loading"><div class="spin"></div>Loading…</td></tr></tbody>
+      </table>
+      <div class="pagination">
+        <span id="games-count">—</span>
+        <div class="pg-btns" id="games-pg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PREMIUM ══ -->
+  <div class="page" id="page-premium">
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+      <div class="stat-card" style="--accent-color:#d0d0d0">
+        <div class="stat-label">Silver Subscribers</div>
+        <div class="stat-value" id="ps-silver">—</div>
+        <div class="stat-delta" id="ps-silver-rev">GH₵29/mo</div>
+      </div>
+      <div class="stat-card" style="--accent-color:#cd7f32">
+        <div class="stat-label">Bronze Subscribers</div>
+        <div class="stat-value" id="ps-bronze">—</div>
+        <div class="stat-delta" id="ps-bronze-rev">GH₵49/mo</div>
+      </div>
+      <div class="stat-card" style="--accent-color:var(--gold)">
+        <div class="stat-label">Gold Subscribers</div>
+        <div class="stat-value" id="ps-gold">—</div>
+        <div class="stat-delta" id="ps-gold-rev">GH₵79/mo</div>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="chart-title">Active Subscriptions</div></div>
+      <table>
+        <thead><tr><th>User</th><th>Plan</th><th>Price</th><th>Expires</th><th>Status</th></tr></thead>
+        <tbody id="subs-tbody"><tr><td colspan="5" class="loading"><div class="spin"></div>Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS ══ -->
+  <div class="page" id="page-settings">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">Platform Status</div></div>
+        <div class="modal-row"><span class="lbl">API Server</span><span class="badge badge-green" id="set-api-status">CHECKING…</span></div>
+        <div class="modal-row"><span class="lbl">Database</span><span class="badge badge-green">CONNECTED</span></div>
+        <div class="modal-row"><span class="lbl">Total Users</span><span class="val" id="set-total-users">—</span></div>
+        <div class="modal-row"><span class="lbl">Total Balance Held</span><span class="val" id="set-balance-held">—</span></div>
+        <div class="modal-row"><span class="lbl">Matchmaking Queue</span><span class="val" id="set-queue">—</span></div>
+        <div class="modal-row"><span class="lbl">Live Games</span><span class="val" id="set-live">—</span></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">Quick Actions</div></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="modal-btn primary" onclick="checkHealth()" style="text-align:center">🔍 Check Server Health</button>
+          <button class="modal-btn" onclick="refreshData()" style="text-align:center">↺ Refresh All Data</button>
+          <button class="modal-btn danger" onclick="adminLogout()" style="text-align:center">🚪 Logout Admin</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ═══════ USER DETAIL MODAL ═══════ -->
+<div class="modal-ovl" id="user-modal">
+  <div class="modal-box">
+    <h3 id="um-title">User Detail</h3>
+    <div id="um-rows"></div>
+    <div style="margin-top:16px;padding:14px;background:rgba(245,200,66,.05);border-radius:10px;border:1px solid rgba(245,200,66,.1)">
+      <div style="font-size:10px;color:var(--muted2);letter-spacing:1px;margin-bottom:8px">BALANCE ADJUSTMENT</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input class="bal-input" id="bal-adjust" type="number" placeholder="±GH₵ amount" step="1">
+        <input class="bal-input" id="bal-note" type="text" placeholder="Note" style="flex:1;width:auto">
+        <button class="modal-btn primary" id="bal-adjust-btn" onclick="adjustBalance()">Apply</button>
+      </div>
+    </div>
+    <div id="um-recent-games" style="margin-top:16px;"></div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" id="ban-btn" onclick="toggleBan()">Ban User</button>
+      <button class="modal-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ════════════════════════════════════════
+// CONFIG — set window.BB_API before this
+// ════════════════════════════════════════
+const API = (window.BB_API || '').replace(/\/$/, '');
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let token = localStorage.getItem('bb_admin_token');
+let adminUser = null;
+let currentPeriod = '7d';
+let chartData = null;
+let selectedUserId = null;
+let selectedUserData = null;
+let liveRefreshInterval = null;
+let searchDebounce = null;
+
+// ════════════════════════════════════════
+// API CLIENT
+// ════════════════════════════════════════
+async function api(path, opts = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...opts.headers,
+  };
+  const res = await fetch(`${API}${path}`, { ...opts, headers });
+  if (res.status === 401 || res.status === 403) {
+    localStorage.removeItem('bb_admin_token');
+    token = null;
+    showAuth();
+    throw new Error('Access denied');
+  }
+  let data;
+  try { data = await res.json(); } catch { data = {}; }
+  if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+  return data;
+}
+
+// ════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════
+function showAuth() { document.getElementById('auth-overlay').classList.remove('hidden'); }
+function hideAuth() { document.getElementById('auth-overlay').classList.add('hidden'); }
+
+async function adminLogin() {
+  const email = document.getElementById('adm-email').value.trim();
+  const pass = document.getElementById('adm-pass').value;
+  const errEl = document.getElementById('auth-err');
+  errEl.classList.remove('show');
+
+  if (!email || !pass) { errEl.textContent = 'Fill in all fields'; errEl.classList.add('show'); return; }
+
+  const btn = document.getElementById('adm-login-btn');
+  btn.disabled = true; btn.textContent = 'AUTHENTICATING…';
+
+  try {
+    const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pass }) });
+    if (!data.user?.is_admin) {
+      errEl.textContent = 'Admin access required. Contact your system administrator.';
+      errEl.classList.add('show');
+      localStorage.removeItem('bb_admin_token');
+      return;
+    }
+    token = data.token;
+    localStorage.setItem('bb_admin_token', token);
+    adminUser = data.user;
+    onAdminLoggedIn();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'ACCESS CONSOLE';
+  }
+}
+
+async function checkAdminSession() {
+  if (!token) return false;
+  try {
+    const user = await api('/api/auth/profile');
+    if (!user.is_admin) { localStorage.removeItem('bb_admin_token'); return false; }
+    adminUser = user;
+    return true;
+  } catch { localStorage.removeItem('bb_admin_token'); return false; }
+}
+
+function adminLogout() {
+  localStorage.removeItem('bb_admin_token');
+  token = null; adminUser = null;
+  clearInterval(liveRefreshInterval);
+  showAuth();
+}
+
+function onAdminLoggedIn() {
+  hideAuth();
+  document.getElementById('sb-name').textContent = adminUser.username;
+  document.getElementById('sb-email').textContent = adminUser.email;
+  document.getElementById('sb-avatar').textContent = adminUser.username[0].toUpperCase();
+  loadDashboard();
+  startLiveRefresh();
+}
+
+// Enter key on auth
+['adm-email','adm-pass'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') adminLogin(); });
+});
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+function fmtGHS(n) {
+  if (n === null || n === undefined) return '—';
+  return `GH₵${parseFloat(n).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-GH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function timeAgo(d) {
+  if (!d) return '—';
+  const secs = Math.floor((Date.now() - new Date(d)) / 1000);
+  if (secs < 60) return `${secs}s ago`;
+  if (secs < 3600) return `${Math.floor(secs/60)}m ago`;
+  if (secs < 86400) return `${Math.floor(secs/3600)}h ago`;
+  return `${Math.floor(secs/86400)}d ago`;
+}
+
+const ACOLORS = ['#f5c842','#22d98a','#4c8dff','#a78bfa','#ff7c3a','#ff4560'];
+function avatar(name, i) {
+  const c = ACOLORS[(i || 0) % ACOLORS.length];
+  return `<span class="uavatar" style="background:${c}20;color:${c}">${(name||'?')[0].toUpperCase()}</span>`;
+}
+const planBadge = p => ({
+  none: '<span class="badge badge-muted">NONE</span>',
+  silver: '<span class="badge badge-muted" style="color:#d0d0d0;border-color:#d0d0d055">🥈 SILVER</span>',
+  bronze: '<span class="badge badge-muted" style="color:#cd7f32;border-color:#cd7f3255">🥉 BRONZE</span>',
+  gold: '<span class="badge badge-gold">🥇 GOLD</span>',
+}[p] || '—');
+
+function adminToast(msg, type = '') {
+  const t = document.createElement('div');
+  t.className = 'adm-toast';
+  t.style.borderColor = type === 'err' ? 'rgba(255,69,96,.3)' : type === 'ok' ? 'rgba(34,217,138,.3)' : '';
+  t.innerHTML = `<span>${msg}</span>`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function animCount(id, to, fmt = (v => Math.round(v))) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let start = null;
+  const from = parseFloat(el.textContent.replace(/[^0-9.]/g, '')) || 0;
+  function step(ts) {
+    if (!start) start = ts;
+    const p = Math.min((ts - start) / 900, 1);
+    el.textContent = fmt(from + (to - from) * p);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function renderPagination(containerId, currentPage, totalPages, loadFn) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  if (totalPages <= 1) return;
+
+  const pages = [];
+  if (currentPage > 1) pages.push({ label: '‹', page: currentPage - 1 });
+  for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+    pages.push({ label: i, page: i, active: i === currentPage });
+  }
+  if (currentPage < totalPages) pages.push({ label: '›', page: currentPage + 1 });
+
+  pages.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = `pg-btn ${p.active ? 'active' : ''}`;
+    btn.textContent = p.label;
+    btn.onclick = () => loadFn(p.page);
+    container.appendChild(btn);
+  });
+}
+
+// ════════════════════════════════════════
+// DASHBOARD LOAD
+// ════════════════════════════════════════
+async function loadDashboard() {
+  await Promise.all([loadStats(), loadCharts(currentPeriod), loadRecentGames()]);
+}
+
+async function loadStats() {
+  try {
+    const data = await api('/api/admin/stats');
+
+    animCount('s-revenue', parseFloat(data.premium_revenue) || 0, v => fmtGHS(v));
+    animCount('s-users', data.users.active_users || 0);
+    animCount('s-games', data.games.finished_games || 0);
+    animCount('s-subs', data.users.premium_users || 0);
+
+    document.getElementById('s-revenue-sub').textContent = `GH₵${fmtGHS(data.transactions?.deposit_volume || 0)} deposited total`;
+    document.getElementById('s-users-sub').textContent = `${data.users.total_users || 0} total, ${data.users.banned_users || 0} banned`;
+    document.getElementById('s-games-sub').textContent = `${data.live_games?.length || 0} live now`;
+    document.getElementById('s-subs-sub').textContent = `Silver/Bronze/Gold holders`;
+
+    // Live games
+    const liveGames = data.live_games || [];
+    document.getElementById('live-count').textContent = `${liveGames.length} LIVE`;
+    document.getElementById('live-count-big').textContent = liveGames.length;
+    document.getElementById('live-players').textContent = liveGames.length * 2;
+    const totalStaked = liveGames.reduce((a, g) => a + parseFloat(g.stake || 0), 0);
+    document.getElementById('live-stake').textContent = fmtGHS(totalStaked);
+
+    // Render live table
+    const liveBody = document.getElementById('live-tbody');
+    if (liveGames.length === 0) {
+      liveBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted2);padding:24px">No active games right now</td></tr>';
+    } else {
+      liveBody.innerHTML = liveGames.map(g => `
+        <tr class="live-game-row">
+          <td style="font-size:11px;color:var(--muted2)">${g.gameId.slice(0,8)}…</td>
+          <td><b>${g.player1}</b></td>
+          <td><b>${g.player2}</b></td>
+          <td style="color:var(--gold)">${fmtGHS(g.stake)}</td>
+          <td><span style="color:var(--green)">${g.score1}</span> vs <span style="color:var(--orange)">${g.score2}</span></td>
+          <td style="color:var(--red)">${g.elapsed}s</td>
+          <td><button class="action-btn danger" onclick="forceEndGame('${g.gameId}')">End</button></td>
+        </tr>
+      `).join('');
+    }
+
+    // Settings page
+    document.getElementById('set-total-users').textContent = data.users.total_users || '—';
+    document.getElementById('set-balance-held').textContent = fmtGHS(data.users.total_balance_held);
+    document.getElementById('set-queue').textContent = data.matchmaking_queue ?? '—';
+    document.getElementById('set-live').textContent = liveGames.length;
+
+  } catch (err) {
+    adminToast('Failed to load stats: ' + err.message, 'err');
+  }
+}
+
+async function loadCharts(period = '7d') {
+  try {
+    const data = await api(`/api/admin/revenue?period=${period}`);
+    chartData = data;
+    drawRevenueChart(data, period);
+    drawDonut(data.providers || []);
+  } catch (err) {
+    console.warn('Chart load failed:', err.message);
+  }
+}
+
+function drawRevenueChart(data, period) {
+  const canvas = document.getElementById('revenue-chart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 600;
+  const H = 180;
+  canvas.width = W; canvas.height = H;
+
+  // Build day map
+  const days = period === '30d' ? 30 : period === '90d' ? 90 : 7;
+  const dayMap = {};
+  const gameMap = {};
+  (data.revenue || []).forEach(r => { dayMap[r.day] = parseFloat(r.deposits) || 0; });
+  (data.games || []).forEach(r => { gameMap[r.day] = parseInt(r.count) || 0; });
+
+  const labels = [];
+  const revData = [];
+  const gamesData = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    labels.push(d.toLocaleDateString('en', { month: 'short', day: 'numeric' }));
+    revData.push(dayMap[key] || 0);
+    gamesData.push(gameMap[key] || 0);
+  }
+
+  const pad = { t: 10, r: 10, b: 30, l: 55 };
+  const cW = W - pad.l - pad.r;
+  const cH = H - pad.t - pad.b;
+  const maxRev = Math.max(...revData, 1);
+  const maxG = Math.max(...gamesData, 1);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + cH * (1 - i / 4);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.font = '10px DM Mono'; ctx.textAlign = 'right';
+    ctx.fillText(`₵${Math.round(maxRev * i / 4 / 100) * 100}`, pad.l - 6, y + 4);
+  }
+
+  // Game bars
+  const barW = Math.max(2, cW / days * 0.35);
+  gamesData.forEach((v, i) => {
+    const x = pad.l + i * (cW / (days - 1 || 1)) - barW / 2;
+    const bH = cH * (v / maxG) * 0.5;
+    ctx.fillStyle = 'rgba(76,141,255,0.35)';
+    ctx.fillRect(x, pad.t + cH - bH, barW, bH);
+  });
+
+  // Revenue area
+  const revGrad = ctx.createLinearGradient(0, pad.t, 0, pad.t + cH);
+  revGrad.addColorStop(0, 'rgba(245,200,66,0.25)');
+  revGrad.addColorStop(1, 'rgba(245,200,66,0)');
+  ctx.beginPath();
+  revData.forEach((v, i) => {
+    const x = pad.l + i * (cW / (days - 1 || 1));
+    const y = pad.t + cH * (1 - v / maxRev);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo(pad.l + cW, pad.t + cH);
+  ctx.lineTo(pad.l, pad.t + cH);
+  ctx.closePath();
+  ctx.fillStyle = revGrad; ctx.fill();
+
+  ctx.beginPath();
+  revData.forEach((v, i) => {
+    const x = pad.l + i * (cW / (days - 1 || 1));
+    const y = pad.t + cH * (1 - v / maxRev);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = 'var(--gold)'; ctx.lineWidth = 2; ctx.stroke();
+
+  // X labels
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = '9px DM Mono'; ctx.textAlign = 'center';
+  const step = Math.ceil(days / 7);
+  labels.forEach((l, i) => {
+    if (i % step !== 0) return;
+    const x = pad.l + i * (cW / (days - 1 || 1));
+    ctx.fillText(l, x, H - 6);
+  });
+
+  document.getElementById('chart-range').textContent = `${days}-day overview`;
+}
+
+function drawDonut(providers) {
+  const canvas = document.getElementById('donut-chart');
+  const ctx = canvas.getContext('2d');
+  const size = 120;
+  canvas.width = size; canvas.height = size;
+  const cx = size / 2, cy = size / 2, r = 46, inner = 28;
+
+  const provColors = { mtn: '#f5c842', vodafone: '#ff4560', airteltigo: '#4c8dff', stripe: '#22d98a', internal: '#a78bfa' };
+  const total = providers.reduce((a, p) => a + parseFloat(p.total || 0), 0);
+
+  const data = providers.map(p => ({
+    label: p.provider?.toUpperCase() || 'OTHER',
+    val: total > 0 ? Math.round(parseFloat(p.total) / total * 100) : 0,
+    color: provColors[p.provider] || '#7a7f9a',
+  }));
+
+  if (data.length === 0) {
+    data.push({ label: 'NO DATA', val: 100, color: 'var(--muted)' });
+  }
+
+  let angle = -Math.PI / 2;
+  data.forEach(d => {
+    const sweep = 2 * Math.PI * d.val / 100;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, angle, angle + sweep);
+    ctx.arc(cx, cy, inner, angle + sweep, angle, true);
+    ctx.closePath();
+    ctx.fillStyle = d.color; ctx.fill();
+    angle += sweep;
+  });
+
+  ctx.fillStyle = 'var(--bg2)';
+  ctx.beginPath(); ctx.arc(cx, cy, inner - 2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'var(--text)'; ctx.font = 'bold 11px Syne'; ctx.textAlign = 'center';
+  ctx.fillText('Split', cx, cy + 4);
+
+  document.getElementById('donut-legend').innerHTML = data.map(d => `
+    <div class="dl-item">
+      <div class="dl-dot" style="background:${d.color}"></div>
+      <span class="dl-name">${d.label}</span>
+      <span class="dl-val">${d.val}%</span>
+    </div>
+  `).join('');
+}
+
+async function loadRecentGames() {
+  try {
+    const data = await api('/api/admin/games?limit=6');
+    const games = data.games || [];
+    document.getElementById('recent-games-tbody').innerHTML = games.map(g => `
+      <tr>
+        <td><b>${g.player1_name}</b> vs <b>${g.player2_name}</b></td>
+        <td style="color:var(--gold)">${fmtGHS(g.stake_amount)}</td>
+        <td><span style="color:var(--green)">${g.player1_score}</span> — <span style="color:var(--orange)">${g.player2_score}</span></td>
+        <td>${g.winner_name ? `<span class="badge badge-green">${g.winner_name}</span>` : '<span class="badge badge-muted">TIE</span>'}</td>
+        <td>${g.status === 'playing' ? '<span class="badge badge-gold">LIVE</span>' : '<span class="badge badge-muted">DONE</span>'}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted2);padding:20px">No games yet</td></tr>';
+  } catch (err) { console.warn('Recent games failed:', err.message); }
+}
+
+// ════════════════════════════════════════
+// USERS
+// ════════════════════════════════════════
+async function loadUsers(page = 1) {
+  document.getElementById('users-tbody').innerHTML = '<tr><td colspan="7" class="loading"><div class="spin"></div>Loading…</td></tr>';
+  try {
+    const q = document.getElementById('user-search').value.trim();
+    const status = document.getElementById('user-status-filter').value;
+    const params = new URLSearchParams({ page, limit: 20, ...(q && { q }), ...(status && { status }) });
+    const data = await api(`/api/admin/users?${params}`);
+    const users = data.users || [];
+
+    document.getElementById('users-tbody').innerHTML = users.map((u, i) => `
+      <tr>
+        <td>${avatar(u.username, i)}<b>${u.username}</b><br><span style="font-size:10px;color:var(--muted2)">${u.email}</span></td>
+        <td style="color:var(--green);font-weight:500">${fmtGHS(u.balance)}</td>
+        <td><span style="color:var(--green)">${u.total_wins}W</span> / <span style="color:var(--red)">${u.total_losses}L</span></td>
+        <td>${planBadge(u.premium_plan)}</td>
+        <td style="color:var(--muted2)">${timeAgo(u.created_at)}</td>
+        <td>${u.is_banned ? '<span class="badge badge-red">BANNED</span>' : '<span class="badge badge-green">ACTIVE</span>'}</td>
+        <td>
+          <button class="action-btn" onclick="viewUser(${u.id})">View</button>
+          <button class="action-btn danger" onclick="quickBan(${u.id}, ${u.is_banned})">${u.is_banned ? 'Unban' : 'Ban'}</button>
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted2);padding:20px">No users found</td></tr>';
+
+    document.getElementById('users-count').textContent = `Showing ${users.length} of ${data.total} users`;
+    renderPagination('users-pg', page, data.pages, loadUsers);
+  } catch (err) { adminToast('Failed to load users: ' + err.message, 'err'); }
+}
+
+function debounceSearch() {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => loadUsers(1), 300);
+}
+
+async function quickBan(userId, isBanned) {
+  try {
+    await api(`/api/admin/users/${userId}`, { method: 'PATCH', body: JSON.stringify({ is_banned: !isBanned }) });
+    adminToast(isBanned ? '✅ User unbanned' : '🚫 User banned', 'ok');
+    loadUsers();
+  } catch (err) { adminToast('Error: ' + err.message, 'err'); }
+}
+
+async function viewUser(userId) {
+  selectedUserId = userId;
+  document.getElementById('um-rows').innerHTML = '<div class="loading"><div class="spin"></div>Loading…</div>';
+  document.getElementById('um-title').textContent = 'User Detail';
+  document.getElementById('user-modal').classList.add('show');
+
+  try {
+    const data = await api(`/api/admin/users/${userId}`);
+    const u = data.user;
+    selectedUserData = u;
+
+    document.getElementById('um-title').innerHTML = `${avatar(u.username, userId)} ${u.username}`;
+    document.getElementById('ban-btn').textContent = u.is_banned ? 'Unban User' : 'Ban User';
+    document.getElementById('ban-btn').className = `modal-btn ${u.is_banned ? 'primary' : 'danger'}`;
+
+    document.getElementById('um-rows').innerHTML = [
+      ['Email', u.email],
+      ['Phone', u.phone],
+      ['Balance', `<span style="color:var(--green);font-weight:600">${fmtGHS(u.balance)}</span>`],
+      ['Games', `${u.total_games} played`],
+      ['Record', `<span style="color:var(--green)">${u.total_wins}W</span> / <span style="color:var(--red)">${u.total_losses}L</span>`],
+      ['Plan', planBadge(u.premium_plan)],
+      ['Premium Expires', u.premium_expires_at ? fmtDate(u.premium_expires_at) : '—'],
+      ['Joined', fmtDate(u.created_at)],
+      ['Status', u.is_banned ? '<span class="badge badge-red">BANNED</span>' : '<span class="badge badge-green">ACTIVE</span>'],
+      ['Admin', u.is_admin ? '<span class="badge badge-gold">YES</span>' : '<span class="badge badge-muted">NO</span>'],
+    ].map(([l, v]) => `<div class="modal-row"><span class="lbl">${l}</span><span class="val">${v}</span></div>`).join('');
+
+    // Recent games
+    if (data.games?.length) {
+      document.getElementById('um-recent-games').innerHTML = `
+        <div style="font-size:10px;color:var(--muted2);letter-spacing:1px;margin-bottom:8px">RECENT GAMES</div>
+        ${data.games.slice(0, 5).map(g => {
+          const isP1 = g.player1_name === u.username;
+          const myScore = isP1 ? g.player1_score : g.player2_score;
+          const oppScore = isP1 ? g.player2_score : g.player1_score;
+          const opp = isP1 ? g.player2_name : g.player1_name;
+          const won = g.winner_id === u.id;
+          const tied = !g.winner_id && g.status === 'finished';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span class="badge ${tied ? 'badge-gold' : won ? 'badge-green' : 'badge-red'}">${tied ? 'TIE' : won ? 'WIN' : 'LOSS'}</span>
+            <span style="flex:1;font-size:12px">vs ${opp} · ${myScore}–${oppScore}</span>
+            <span style="color:var(--gold);font-size:11px">${fmtGHS(g.stake_amount)}</span>
+          </div>`;
+        }).join('')}
+      `;
+    }
+  } catch (err) {
+    document.getElementById('um-rows').innerHTML = `<div style="color:var(--red);padding:12px">Error: ${err.message}</div>`;
+  }
+}
+
+async function toggleBan() {
+  if (!selectedUserId || !selectedUserData) return;
+  const btn = document.getElementById('ban-btn');
+  btn.disabled = true;
+  try {
+    await api(`/api/admin/users/${selectedUserId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_banned: !selectedUserData.is_banned }),
+    });
+    adminToast(selectedUserData.is_banned ? '✅ User unbanned' : '🚫 User banned', 'ok');
+    closeModal();
+    loadUsers();
+  } catch (err) {
+    adminToast('Error: ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function adjustBalance() {
+  if (!selectedUserId) return;
+  const adj = parseFloat(document.getElementById('bal-adjust').value);
+  const note = document.getElementById('bal-note').value.trim();
+  if (isNaN(adj) || adj === 0) { adminToast('Enter a valid adjustment amount', 'err'); return; }
+
+  const btn = document.getElementById('bal-adjust-btn');
+  btn.disabled = true;
+  try {
+    const data = await api(`/api/admin/users/${selectedUserId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ balance_adjustment: adj, note }),
+    });
+    adminToast(`✅ Balance adjusted by ${adj > 0 ? '+' : ''}${fmtGHS(adj)}`, 'ok');
+    document.getElementById('bal-adjust').value = '';
+    document.getElementById('bal-note').value = '';
+    viewUser(selectedUserId); // refresh
+    loadStats();
+  } catch (err) {
+    adminToast('Error: ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function closeModal() {
+  document.getElementById('user-modal').classList.remove('show');
+  selectedUserId = null;
+  selectedUserData = null;
+}
+document.getElementById('user-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('user-modal')) closeModal();
+});
+
+// ════════════════════════════════════════
+// TRANSACTIONS
+// ════════════════════════════════════════
+async function loadTransactions(page = 1) {
+  document.getElementById('tx-tbody').innerHTML = '<tr><td colspan="7" class="loading"><div class="spin"></div>Loading…</td></tr>';
+  try {
+    const type = document.getElementById('tx-type-filter').value;
+    const status = document.getElementById('tx-status-filter').value;
+    const user = document.getElementById('tx-user-filter').value.trim();
+    const params = new URLSearchParams({ page, limit: 20, ...(type && { type }), ...(status && { status }), ...(user && { user }) });
+    const data = await api(`/api/admin/transactions?${params}`);
+    const txs = data.transactions || [];
+
+    const typeColors = { deposit: 'badge-green', withdrawal: 'badge-red', stake: 'badge-blue', winnings: 'badge-gold', premium: 'badge-purple', refund: 'badge-muted' };
+
+    document.getElementById('tx-tbody').innerHTML = txs.map(t => `
+      <tr>
+        <td style="color:var(--muted2);font-size:11px">${t.id.slice(0,12)}…</td>
+        <td><b>${t.username}</b><br><span style="font-size:10px;color:var(--muted2)">${t.email}</span></td>
+        <td><span class="badge ${typeColors[t.type] || 'badge-muted'}">${t.type.toUpperCase()}</span></td>
+        <td style="font-weight:500;color:${t.type === 'withdrawal' ? 'var(--red)' : 'var(--green)'}">${t.type === 'withdrawal' ? '-' : '+'}${fmtGHS(t.amount)}</td>
+        <td style="color:var(--muted2)">${(t.provider || '').toUpperCase()}</td>
+        <td>${t.status === 'completed' ? '<span class="badge badge-green">OK</span>' : t.status === 'pending' ? '<span class="badge badge-gold">PENDING</span>' : '<span class="badge badge-red">FAILED</span>'}</td>
+        <td style="color:var(--muted2);font-size:11px">${timeAgo(t.created_at)}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted2);padding:20px">No transactions</td></tr>';
+
+    document.getElementById('tx-count').textContent = `${data.total} transactions`;
+    renderPagination('tx-pg', page, data.pages, loadTransactions);
+  } catch (err) { adminToast('Failed to load transactions: ' + err.message, 'err'); }
+}
+
+// ════════════════════════════════════════
+// GAMES
+// ════════════════════════════════════════
+async function loadGames(page = 1) {
+  document.getElementById('games-tbody').innerHTML = '<tr><td colspan="7" class="loading"><div class="spin"></div>Loading…</td></tr>';
+  try {
+    const status = document.getElementById('games-status-filter').value;
+    const params = new URLSearchParams({ page, limit: 20, ...(status && { status }) });
+    const data = await api(`/api/admin/games?${params}`);
+    const games = data.games || [];
+
+    document.getElementById('games-tbody').innerHTML = games.map(g => `
+      <tr>
+        <td style="font-size:11px;color:var(--muted2)">${g.id.slice(0,8)}…</td>
+        <td><b>${g.player1_name}</b></td>
+        <td><b>${g.player2_name}</b></td>
+        <td style="color:var(--gold)">${fmtGHS(g.stake_amount)}</td>
+        <td><span style="color:var(--green)">${g.player1_score}</span> — <span style="color:var(--orange)">${g.player2_score}</span></td>
+        <td>${g.winner_name ? `<span class="badge badge-green">${g.winner_name}</span>` : '<span class="badge badge-muted">TIE</span>'}</td>
+        <td style="color:var(--muted2);font-size:11px">${timeAgo(g.finished_at || g.started_at)}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted2);padding:20px">No games found</td></tr>';
+
+    document.getElementById('games-count').textContent = `${data.total} games`;
+    renderPagination('games-pg', page, data.pages, loadGames);
+  } catch (err) { adminToast('Failed to load games: ' + err.message, 'err'); }
+}
+
+// ════════════════════════════════════════
+// PREMIUM
+// ════════════════════════════════════════
+async function loadPremium() {
+  try {
+    const data = await api('/api/admin/premium');
+    const counts = data.counts || {};
+    const rev = data.revenue || {};
+
+    document.getElementById('ps-silver').textContent = counts.silver || 0;
+    document.getElementById('ps-bronze').textContent = counts.bronze || 0;
+    document.getElementById('ps-gold').textContent = counts.gold || 0;
+    document.getElementById('ps-silver-rev').textContent = `GH₵${rev.silver_rev || 0} revenue`;
+    document.getElementById('ps-bronze-rev').textContent = `GH₵${rev.bronze_rev || 0} revenue`;
+    document.getElementById('ps-gold-rev').textContent = `GH₵${rev.gold_rev || 0} revenue`;
+
+    const subs = data.subscriptions || [];
+    document.getElementById('subs-tbody').innerHTML = subs.map((u, i) => `
+      <tr>
+        <td>${avatar(u.username, i)} ${u.username}</td>
+        <td>${planBadge(u.premium_plan)}</td>
+        <td style="color:var(--gold)">${u.premium_plan === 'silver' ? 'GH₵29' : u.premium_plan === 'bronze' ? 'GH₵49' : 'GH₵79'}</td>
+        <td style="color:var(--muted2)">${u.premium_expires_at ? fmtDate(u.premium_expires_at) : '—'}</td>
+        <td><span class="badge badge-green">ACTIVE</span></td>
+      </tr>
+    `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted2);padding:20px">No active subscriptions</td></tr>';
+  } catch (err) { adminToast('Failed to load subscriptions: ' + err.message, 'err'); }
+}
+
+// ════════════════════════════════════════
+// LIVE GAMES
+// ════════════════════════════════════════
+async function forceEndGame(gameId) {
+  if (!confirm('Force-end this game?')) return;
+  try {
+    await api(`/api/admin/games/${gameId}/end`, { method: 'POST' });
+    adminToast('⛔ Game ended', 'ok');
+    loadStats();
+  } catch (err) { adminToast('Error: ' + err.message, 'err'); }
+}
+
+function startLiveRefresh() {
+  clearInterval(liveRefreshInterval);
+  liveRefreshInterval = setInterval(() => {
+    if (document.getElementById('page-live').classList.contains('active') ||
+        document.getElementById('page-overview').classList.contains('active')) {
+      loadStats();
+    }
+  }, 10000); // every 10 seconds
+}
+
+// ════════════════════════════════════════
+// LIVE FEED (real events via polling)
+// ════════════════════════════════════════
+let lastFeedTxId = null;
+
+async function pollFeed() {
+  try {
+    const data = await api('/api/admin/transactions?limit=5');
+    const txs = (data.transactions || []).filter(t => t.created_at > (lastFeedCheck || 0));
+    // Just show recent transactions as feed
+    txs.forEach(t => addFeedItem(t));
+    if (txs.length) lastFeedCheck = txs[0].created_at;
+  } catch {}
+}
+
+let lastFeedCheck = null;
+
+function addFeedItem(tx) {
+  const icons = { deposit: '💳', withdrawal: '📤', winnings: '🏆', premium: '👑', stake: '⚡', refund: '↩️' };
+  const bgs = { deposit: 'rgba(76,141,255,.12)', withdrawal: 'rgba(255,69,96,.12)', winnings: 'rgba(34,217,138,.12)', premium: 'rgba(167,139,250,.12)', stake: 'rgba(245,200,66,.12)', refund: 'rgba(255,255,255,.08)' };
+  const msgs = {
+    deposit: `${tx.username} deposited ${fmtGHS(tx.amount)} via ${(tx.provider || '').toUpperCase()}`,
+    withdrawal: `${tx.username} withdrew ${fmtGHS(tx.amount)} to ${(tx.provider || '').toUpperCase()}`,
+    winnings: `${tx.username} won ${fmtGHS(tx.amount)}`,
+    premium: `${tx.username} subscribed to Premium`,
+    stake: `${tx.username} placed ${fmtGHS(tx.amount)} stake`,
+    refund: `${tx.username} got ${fmtGHS(tx.amount)} refunded`,
+  };
+  const now = new Date().toLocaleTimeString();
+  const feed = document.getElementById('live-feed');
+  const item = document.createElement('div');
+  item.className = 'feed-item';
+  item.innerHTML = `
+    <div class="feed-ico" style="background:${bgs[tx.type] || bgs.stake}">${icons[tx.type] || '🎮'}</div>
+    <div class="feed-body">
+      <div class="feed-title">${msgs[tx.type] || tx.type + ' · ' + fmtGHS(tx.amount)}</div>
+      <div class="feed-time">${now}</div>
+    </div>`;
+  feed.prepend(item);
+  while (feed.children.length > 8) feed.removeChild(feed.lastChild);
+}
+
+// ════════════════════════════════════════
+// HEALTH CHECK
+// ════════════════════════════════════════
+async function checkHealth() {
+  try {
+    const res = await fetch(`${API}/health`);
+    const data = await res.json();
+    document.getElementById('set-api-status').textContent = 'ONLINE';
+    document.getElementById('set-api-status').className = 'badge badge-green';
+    adminToast(`✅ Server healthy · uptime ${Math.floor(data.uptime / 60)}m`, 'ok');
+  } catch {
+    document.getElementById('set-api-status').textContent = 'OFFLINE';
+    document.getElementById('set-api-status').className = 'badge badge-red';
+    adminToast('❌ Server unreachable', 'err');
+  }
+}
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+const pageTitles = {
+  overview: 'Dashboard', live: 'Live Games', users: 'Users',
+  transactions: 'Transactions', games: 'Game History', premium: 'Subscriptions', settings: 'Settings'
+};
+const pageLoaders = {
+  overview: loadDashboard,
+  live: loadStats,
+  users: () => loadUsers(1),
+  transactions: () => loadTransactions(1),
+  games: () => loadGames(1),
+  premium: loadPremium,
+  settings: () => { checkHealth(); loadStats(); },
+};
+
+function nav(page, el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[page] || page;
+  if (pageLoaders[page]) pageLoaders[page]();
+}
+
+async function refreshData() {
+  const activePage = document.querySelector('.page.active')?.id?.replace('page-', '');
+  if (activePage && pageLoaders[activePage]) {
+    await pageLoaders[activePage]();
+    adminToast('✅ Data refreshed', 'ok');
+  }
+}
+
+// ════════════════════════════════════════
+// CHARTS PERIOD SWITCH
+// ════════════════════════════════════════
+function setPeriod(p, el) {
+  document.querySelectorAll('.pt').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentPeriod = p;
+  loadCharts(p);
+}
+
+// ════════════════════════════════════════
+// CLOCK
+// ════════════════════════════════════════
+function updateClock() {
+  document.getElementById('tb-clock').textContent = new Date().toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ════════════════════════════════════════
+// RESIZE — redraw charts
+// ════════════════════════════════════════
+window.addEventListener('resize', () => {
+  if (chartData) {
+    drawRevenueChart(chartData, currentPeriod);
+    drawDonut(chartData.providers || []);
+  }
+});
+
+// ════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════
+async function boot() {
+  const ok = await checkAdminSession();
+  if (ok) { onAdminLoggedIn(); }
+  else { showAuth(); }
+}
+
+boot();
+</script>
+</body>
+</html>
