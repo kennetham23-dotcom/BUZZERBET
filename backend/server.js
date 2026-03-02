@@ -8,6 +8,7 @@ const helmet  = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const { testConnection } = require('./config/db');
+const { runMigrations } = require('./config/migrate');
 const logger  = require('./config/logger');
 const { initSocket } = require('./socket/gameSocket');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -120,6 +121,7 @@ const PORT = process.env.PORT || 3000;
 
 async function start() {
   await testConnection();
+  await runMigrations();
 
   server.listen(PORT, () => {
     logger.info(`🚀 BuzzerBet server running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
