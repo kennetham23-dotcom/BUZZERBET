@@ -105,7 +105,12 @@ async function migrate() {
   await conn.end();
 }
 
-migrate().catch(err => {
-  console.error('❌ Migration failed:', err);
-  process.exit(1);
-});
+// Allow running directly: node migrate.js
+if (require.main === module) {
+  migrate().catch(err => {
+    console.error("Migration failed:", err);
+    process.exit(1);
+  });
+}
+
+module.exports = { runMigrations: migrate };
