@@ -2,2118 +2,1193 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>BuzzerBet</title>
-
-<!-- PWA -->
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#FFD700">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="BuzzerBet">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
-<meta name="mobile-web-app-capable" content="yes">
-
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-<!-- API config — server fills this in, or set to '' for same-origin -->
-<script>window.BB_API = '';</script>
-<!-- Socket.io (served by the backend) -->
-<script src="/socket.io/socket.io.js"></script>
-<!-- PWA module: install prompt, push notifications, network banner, wake lock -->
-<script src="/pwa.js"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuzzerBet — Project Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════════════════
-   CSS VARIABLES & RESET
-═══════════════════════════════════════════════════ */
-:root {
-  --gold: #FFD700;
-  --gold-dark: #B8860B;
-  --gold-light: #FFF176;
-  --bg: #0a0a0f;
-  --surface: #12121a;
-  --surface2: #1a1a2e;
-  --accent: #ff6b00;
-  --text: #f0f0f0;
-  --text-muted: #888;
-  --silver: #C0C0C0;
-  --bronze: #CD7F32;
-  --green: #00e676;
-  --red: #ff1744;
-  --bar-h: 64px;
-  --api: '';  /* Set via JS: window.BB_API = 'https://your-server.com' */
+:root{
+  --g:#FFD700;--g2:#B8860B;--g3:#fff176;
+  --bg:#07070e;--s1:#0f0f1c;--s2:#161628;--s3:#1e1e34;
+  --green:#00e676;--red:#ff3d57;--orange:#ff6b00;--blue:#4fc3f7;
+  --muted:#555570;--text:#e8e8f8;
+  --silver:#c0c0d0;--bronze:#cd7f32;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{color:var(--text);font-family:'Barlow Condensed',sans-serif;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+
+/* ── HERO ── */
+#hero{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;padding:60px 24px;
+  background:radial-gradient(ellipse 120% 80% at 50% -10%,rgba(255,215,0,.07) 0%,transparent 60%),var(--bg);
+}
+#hero canvas{position:absolute;inset:0;opacity:.35;pointer-events:none}
+.hero-tag{
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--g2);
+  border:1px solid rgba(255,215,0,.2);border-radius:999px;padding:5px 16px;
+  margin-bottom:28px;background:rgba(255,215,0,.04);
+}
+.hero-title{
+  font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(52px,10vw,110px);line-height:.9;
+  text-align:center;letter-spacing:-2px;
+  background:linear-gradient(135deg,var(--g3) 0%,var(--g) 40%,var(--g2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 60px rgba(255,215,0,.35));
+  margin-bottom:8px;
+}
+.hero-sub{
+  font-family:'Barlow Condensed',sans-serif;font-weight:300;font-size:clamp(16px,3vw,24px);
+  letter-spacing:6px;color:var(--muted);text-transform:uppercase;text-align:center;margin-bottom:48px;
+}
+.stat-row{display:flex;gap:clamp(16px,4vw,48px);flex-wrap:wrap;justify-content:center;margin-bottom:56px}
+.stat-pill{
+  display:flex;flex-direction:column;align-items:center;
+  padding:12px 24px;border:1px solid rgba(255,215,0,.15);border-radius:14px;
+  background:rgba(255,215,0,.04);backdrop-filter:blur(10px);
+}
+.stat-num{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:700;color:var(--g);line-height:1}
+.stat-lbl{font-size:11px;color:var(--muted);letter-spacing:2px;margin-top:4px}
+.scroll-hint{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  font-family:'DM Mono';font-size:10px;letter-spacing:3px;color:var(--muted);
+}
+.scroll-arrow{width:1px;height:40px;background:linear-gradient(to bottom,transparent,var(--g));animation:scrollPulse 2s ease infinite}
+@keyframes scrollPulse{0%,100%{opacity:.3;transform:scaleY(1)}50%{opacity:1;transform:scaleY(1.3)}}
+
+/* ── SECTION ── */
+section{max-width:1200px;margin:0 auto;padding:80px 24px}
+.section-eyebrow{
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:4px;
+  color:var(--g2);text-transform:uppercase;margin-bottom:10px;
+}
+.section-title{
+  font-family:'Orbitron',sans-serif;font-size:clamp(24px,4vw,42px);font-weight:700;
+  line-height:1.1;margin-bottom:16px;
+}
+.section-body{font-size:17px;font-weight:300;color:var(--muted);max-width:580px;line-height:1.7}
+hr.divider{border:none;border-top:1px solid rgba(255,215,0,.1);margin:0}
+
+/* ── SCREENS CAROUSEL ── */
+#screens-section{background:var(--s1);padding:80px 0}
+.screens-inner{max-width:1400px;margin:0 auto;padding:0 24px}
+.screens-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;
+  margin-top:48px;
+}
+.screen-card{
+  background:var(--s2);border:1px solid rgba(255,215,0,.12);border-radius:20px;
+  overflow:hidden;cursor:pointer;transition:all .3s cubic-bezier(.34,1.56,.64,1);
+  position:relative;
+}
+.screen-card:hover{transform:translateY(-8px) scale(1.02);border-color:rgba(255,215,0,.4);box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(255,215,0,.2)}
+.screen-card .sc-badge{
+  position:absolute;top:12px;right:12px;
+  font-family:'DM Mono';font-size:9px;letter-spacing:2px;
+  padding:4px 10px;border-radius:999px;z-index:10;
+}
+.badge-live{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)}
+.badge-pwa{background:rgba(79,195,247,.15);color:var(--blue);border:1px solid rgba(79,195,247,.3)}
+.badge-admin{background:rgba(255,107,0,.15);color:var(--orange);border:1px solid rgba(255,107,0,.3)}
+.badge-auth{background:rgba(255,215,0,.15);color:var(--g);border:1px solid rgba(255,215,0,.3)}
+.badge-pay{background:rgba(205,127,50,.15);color:var(--bronze);border:1px solid rgba(205,127,50,.3)}
+
+.sc-preview{height:220px;position:relative;overflow:hidden}
+.sc-body{padding:18px 20px}
+.sc-title{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--g);margin-bottom:6px;letter-spacing:1px}
+.sc-desc{font-size:14px;font-weight:300;color:var(--muted);line-height:1.5}
+
+/* ── SCREEN PREVIEWS (drawn with CSS/HTML) ── */
+.mock{width:100%;height:100%;background:var(--bg);position:relative;overflow:hidden}
+
+/* Auth mock */
+.m-auth{background:radial-gradient(ellipse at 50% 20%,#1a1a35,var(--bg))}
+.m-auth .logo{font-family:'Orbitron';font-size:20px;font-weight:900;color:var(--g);text-align:center;padding-top:28px;letter-spacing:3px;text-shadow:0 0 20px rgba(255,215,0,.5)}
+.m-auth .tagline{font-size:9px;color:var(--muted);text-align:center;letter-spacing:3px;margin-top:3px}
+.m-auth .card{margin:14px 16px 0;background:#1a1a2e;border:1px solid rgba(255,215,0,.2);border-radius:12px;padding:14px}
+.m-auth .tabs{display:flex;gap:4px;background:rgba(255,255,255,.03);border-radius:8px;padding:3px;margin-bottom:12px}
+.m-auth .tab{flex:1;padding:5px;border-radius:6px;text-align:center;font-family:'Orbitron';font-size:8px;font-weight:700;color:var(--muted)}
+.m-auth .tab.a{background:linear-gradient(135deg,var(--g2),var(--g));color:#0a0a0f}
+.m-auth .field{background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.2);border-radius:7px;height:24px;margin-bottom:7px}
+.m-auth .submit{background:linear-gradient(135deg,var(--g2),var(--g));height:26px;border-radius:8px;margin-top:6px}
+
+/* Game mock */
+.m-game{background:radial-gradient(ellipse at center,#16162a,var(--bg))}
+.m-bar{height:32px;background:linear-gradient(135deg,#0d0d1a,#1a1a2e,#0d0d1a);border-bottom:1px solid rgba(255,215,0,.3);display:flex;align-items:center;padding:0 8px;gap:1px}
+.m-bar-cell{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid rgba(255,215,0,.1);gap:1px}
+.m-bar-cell:last-child{border-right:none}
+.m-bar-lbl{font-size:5px;color:var(--muted);letter-spacing:1px}
+.m-bar-val{font-family:'Orbitron';font-size:9px;font-weight:700;color:var(--g)}
+.m-bar-dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+.m-score{font-family:'Orbitron';font-size:40px;font-weight:900;color:var(--g);text-align:center;margin-top:12px;text-shadow:0 0 20px rgba(255,215,0,.6);line-height:1}
+.m-mults{display:flex;gap:4px;justify-content:flex-end;padding:8px 10px 0}
+.m-mult{width:28px;height:16px;border-radius:999px;border:1px solid rgba(255,215,0,.25);background:rgba(255,215,0,.04);font-family:'Orbitron';font-size:6px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.m-mult.on{border-color:var(--g);background:rgba(255,215,0,.15);color:var(--g)}
+.m-buzzer{width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff9c4,var(--g) 30%,var(--g2) 65%,#7a5c00);margin:0 auto;box-shadow:0 4px 20px rgba(255,215,0,.5),0 10px 30px rgba(0,0,0,.6),inset 0 4px 10px rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:22px;color:rgba(255,255,255,.25)}
+.m-stake-btn{background:linear-gradient(135deg,var(--g2),var(--g));color:#0a0a0f;font-family:'Orbitron';font-size:8px;font-weight:900;letter-spacing:2px;border:none;border-radius:999px;padding:7px 24px;display:block;margin:8px auto 0}
+
+/* Admin mock */
+.m-admin{background:var(--bg);display:flex}
+.m-sidebar{width:50px;background:linear-gradient(180deg,#0d0d1a,#0a0a14);border-right:1px solid rgba(255,215,0,.15);height:100%;display:flex;flex-direction:column;padding:8px 0;gap:2px}
+.m-nav-item{width:36px;height:22px;border-radius:6px;margin:0 7px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted);cursor:pointer}
+.m-nav-item.active{background:rgba(255,215,0,.1);color:var(--g);border:1px solid rgba(255,215,0,.2)}
+.m-admin-main{flex:1;overflow:hidden;padding:8px}
+.m-admin-topbar{height:20px;background:linear-gradient(135deg,#0d0d1a,#1a1a2e);border-radius:6px;margin-bottom:8px;display:flex;align-items:center;padding:0 8px;gap:4px}
+.m-topbar-title{font-family:'Orbitron';font-size:7px;color:var(--g);letter-spacing:1px;flex:1}
+.m-live-badge{background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.3);border-radius:999px;font-size:6px;color:var(--green);padding:2px 6px;font-family:'DM Mono';letter-spacing:1px;display:flex;align-items:center;gap:3px}
+.m-live-dot{width:4px;height:4px;border-radius:50%;background:var(--green);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.m-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:6px}
+.m-stat{background:var(--s3);border:1px solid rgba(255,215,0,.1);border-radius:6px;padding:5px;text-align:center}
+.m-stat-v{font-family:'Orbitron';font-size:8px;font-weight:700;color:var(--g)}
+.m-stat-l{font-size:5px;color:var(--muted);letter-spacing:.5px;margin-top:1px}
+.m-chart{background:var(--s3);border:1px solid rgba(255,215,0,.1);border-radius:6px;height:50px;overflow:hidden;position:relative}
+.m-chart-line{position:absolute;bottom:0;left:0;right:0;height:100%;display:flex;align-items:flex-end;gap:2px;padding:4px}
+.m-bar-c{flex:1;background:rgba(255,215,0,.3);border-radius:2px 2px 0 0;min-height:4px}
+.m-line-overlay{position:absolute;inset:0;pointer-events:none}
+
+/* PWA mock */
+.m-pwa{background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px}
+.m-app-icon{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--g2),var(--g));display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 8px 24px rgba(255,215,0,.4)}
+.m-pwa-title{font-family:'Orbitron';font-size:12px;font-weight:700;color:var(--g);letter-spacing:2px}
+.m-pwa-sub{font-size:9px;color:var(--muted);letter-spacing:2px;text-align:center}
+.m-install-banner{background:linear-gradient(135deg,#0d0d1a,#1a1a2e);border:1px solid rgba(255,215,0,.3);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;width:100%}
+.m-install-icon{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--g2),var(--g));display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.m-install-text{flex:1}
+.m-install-t{font-family:'Orbitron';font-size:7px;color:var(--g);margin-bottom:1px}
+.m-install-s{font-size:7px;color:var(--muted)}
+.m-install-btn{background:linear-gradient(135deg,var(--g2),var(--g));color:#0a0a0f;font-family:'Orbitron';font-size:6px;font-weight:700;border:none;border-radius:6px;padding:4px 8px;white-space:nowrap}
+.m-pwa-feat{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}
+.m-pf{background:var(--s2);border:1px solid rgba(255,215,0,.1);border-radius:8px;padding:6px 8px;display:flex;align-items:center;gap:5px}
+.m-pf-icon{font-size:11px}
+.m-pf-lbl{font-size:8px;color:var(--muted);font-family:'DM Mono'}
+
+/* Payment mock */
+.m-pay{background:var(--bg);padding:16px}
+.m-pay-title{font-family:'Orbitron';font-size:11px;font-weight:700;color:var(--g);text-align:center;margin-bottom:12px;letter-spacing:2px}
+.m-providers{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px}
+.m-prov{background:var(--s2);border:1px solid rgba(255,215,0,.12);border-radius:8px;padding:6px 4px;text-align:center}
+.m-prov.sel{border-color:var(--g);background:rgba(255,215,0,.08)}
+.m-prov-name{font-family:'Orbitron';font-size:7px;font-weight:700;color:var(--g)}
+.m-prov-sub{font-size:6px;color:var(--muted);margin-top:1px}
+.m-pay-input{background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.2);border-radius:8px;height:28px;margin-bottom:7px}
+.m-pay-btn{background:linear-gradient(135deg,var(--g2),var(--g));height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron';font-size:8px;color:#0a0a0f;font-weight:700;letter-spacing:1px}
+
+/* Result mock */
+.m-result{background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
+.m-result-card{background:var(--s2);border:1px solid rgba(0,230,118,.3);border-radius:14px;padding:18px;width:100%;text-align:center}
+.m-result-title{font-family:'Orbitron';font-size:16px;font-weight:900;color:var(--green);margin-bottom:4px}
+.m-result-sub{font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:12px}
+.m-score-boxes{display:flex;gap:8px;margin-bottom:10px}
+.m-sb{flex:1;background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.15);border-radius:8px;padding:8px}
+.m-sb-label{font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:3px}
+.m-sb-val{font-family:'Orbitron';font-size:20px;font-weight:900;color:var(--g)}
+.m-result-amount{font-family:'Orbitron';font-size:13px;color:var(--green);margin-bottom:10px}
+.m-result-btns{display:flex;gap:6px}
+.m-rbtn{flex:1;border-radius:8px;height:24px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron';font-size:7px;font-weight:700}
+.m-rbtn.outline{border:1px solid rgba(255,215,0,.3);color:var(--muted)}
+.m-rbtn.fill{background:linear-gradient(135deg,var(--g2),var(--g));color:#0a0a0f}
+
+/* ── ARCHITECTURE ── */
+#arch-section{background:var(--s1)}
+.arch-wrap{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;margin-top:48px}
+@media(max-width:760px){.arch-wrap{grid-template-columns:1fr}}
+.arch-diagram{position:relative}
+.arch-box{
+  background:var(--s2);border:1px solid rgba(255,215,0,.15);border-radius:16px;
+  padding:18px 20px;margin-bottom:14px;position:relative;
+  transition:all .2s;cursor:default;
+}
+.arch-box:hover{border-color:rgba(255,215,0,.4);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.arch-box-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:8px}
+.arch-box.gold .arch-box-title{color:var(--g)}
+.arch-box.green .arch-box-title{color:var(--green)}
+.arch-box.blue .arch-box-title{color:var(--blue)}
+.arch-box.orange .arch-box-title{color:var(--orange)}
+.arch-box.silver .arch-box-title{color:var(--silver)}
+.arch-box::before{content:'';position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0}
+.arch-box.gold::before{background:var(--g)}
+.arch-box.green::before{background:var(--green)}
+.arch-box.blue::before{background:var(--blue)}
+.arch-box.orange::before{background:var(--orange)}
+.arch-box.silver::before{background:var(--silver)}
+.arch-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.arch-tag{
+  font-family:'DM Mono';font-size:9px;padding:3px 8px;border-radius:6px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:var(--muted);
+}
+.arch-tag.lit{background:rgba(255,215,0,.08);border-color:rgba(255,215,0,.2);color:var(--g)}
+.arch-connector{height:14px;display:flex;align-items:center;justify-content:center;position:relative}
+.arch-connector::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,rgba(255,215,0,.3),rgba(255,215,0,.1))}
+.arch-connector-label{font-family:'DM Mono';font-size:9px;color:var(--muted);background:var(--s1);padding:0 8px;position:relative;z-index:1;letter-spacing:1px}
+.arch-files{display:flex;flex-direction:column;gap:10px}
+.arch-file{
+  background:var(--s2);border:1px solid rgba(255,255,255,.07);border-radius:12px;
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+  transition:all .2s;cursor:default;
+}
+.arch-file:hover{border-color:rgba(255,215,0,.25);background:var(--s3)}
+.arch-file-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.arch-file-info{flex:1}
+.arch-file-name{font-family:'DM Mono';font-size:11px;color:var(--g);margin-bottom:2px}
+.arch-file-desc{font-size:12px;color:var(--muted);font-weight:300}
+.arch-file-lines{font-family:'DM Mono';font-size:10px;color:var(--muted);white-space:nowrap}
+
+/* ── FEATURES ── */
+#feat-section{background:var(--bg)}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-top:48px}
+.feat-card{
+  background:var(--s1);border:1px solid rgba(255,255,255,.07);border-radius:18px;
+  padding:24px;transition:all .25s;position:relative;overflow:hidden;
+}
+.feat-card::before{
+  content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,215,0,.06) 0%,transparent 70%);
+}
+.feat-card:hover{border-color:rgba(255,215,0,.3);transform:translateY(-4px);}
+.feat-card:hover::before{opacity:1}
+.feat-icon{font-size:28px;margin-bottom:14px}
+.feat-title{font-family:'Orbitron';font-size:13px;font-weight:700;color:var(--g);margin-bottom:8px;letter-spacing:1px}
+.feat-desc{font-size:14px;color:var(--muted);line-height:1.6;font-weight:300}
+.feat-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
+
+/* ── TECH STACK ── */
+#tech-section{background:var(--s1)}
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-top:40px}
+.tech-item{
+  background:var(--s2);border:1px solid rgba(255,255,255,.07);border-radius:14px;
+  padding:16px 12px;text-align:center;transition:all .2s;
+}
+.tech-item:hover{border-color:rgba(255,215,0,.3);transform:translateY(-3px)}
+.tech-icon{font-size:24px;margin-bottom:8px}
+.tech-name{font-family:'DM Mono';font-size:11px;color:var(--text);margin-bottom:3px}
+.tech-ver{font-size:10px;color:var(--muted)}
+
+/* ── FLOW ── */
+#flow-section{background:var(--bg)}
+.flow-steps{display:flex;flex-direction:column;gap:0;margin-top:48px;max-width:680px}
+.flow-step{display:flex;gap:20px;position:relative;padding-bottom:32px}
+.flow-step:last-child{padding-bottom:0}
+.flow-step::before{
+  content:'';position:absolute;left:19px;top:40px;bottom:0;width:1px;
+  background:linear-gradient(to bottom,rgba(255,215,0,.3),transparent);
+}
+.flow-step:last-child::before{display:none}
+.flow-num{
+  width:40px;height:40px;border-radius:50%;
+  border:2px solid rgba(255,215,0,.4);background:rgba(255,215,0,.08);
+  font-family:'Orbitron';font-size:14px;font-weight:700;color:var(--g);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;z-index:1;
+}
+.flow-content{padding-top:8px}
+.flow-title{font-family:'Orbitron';font-size:13px;color:var(--g);margin-bottom:6px;letter-spacing:1px}
+.flow-desc{font-size:15px;color:var(--muted);line-height:1.6;font-weight:300}
+.flow-code{
+  font-family:'DM Mono';font-size:11px;color:var(--green);
+  background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.15);
+  border-radius:8px;padding:6px 12px;margin-top:8px;display:inline-block;letter-spacing:.5px;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* ── LAUNCH ── */
+#launch-section{
+  background:radial-gradient(ellipse at 50% 100%,rgba(255,215,0,.07) 0%,transparent 60%),var(--s1);
+  padding:80px 24px;text-align:center;
+}
+.launch-title{font-family:'Orbitron';font-size:clamp(28px,6vw,64px);font-weight:900;color:var(--g);margin-bottom:16px;letter-spacing:-1px}
+.launch-sub{font-size:18px;color:var(--muted);max-width:520px;margin:0 auto 40px;font-weight:300;line-height:1.7}
+.cmd-block{
+  background:var(--bg);border:1px solid rgba(255,215,0,.2);border-radius:14px;
+  padding:20px 28px;max-width:480px;margin:0 auto 16px;text-align:left;
+  font-family:'DM Mono';font-size:14px;line-height:2;
+}
+.cmd-comment{color:var(--muted)}
+.cmd-prompt{color:var(--g2)}
+.cmd-text{color:var(--green)}
+.launch-note{font-family:'DM Mono';font-size:11px;color:var(--muted);letter-spacing:1px;margin-top:16px}
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Rajdhani', sans-serif;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  user-select: none;
-}
+/* ── FOOTER ── */
+footer{background:var(--bg);border-top:1px solid rgba(255,215,0,.1);padding:32px 24px;text-align:center}
+.foot-logo{font-family:'Orbitron';font-size:20px;font-weight:900;color:var(--g);letter-spacing:4px;margin-bottom:8px}
+.foot-sub{font-size:12px;color:var(--muted);letter-spacing:2px}
 
-/* ═══════════════════════════════════════════════════
-   AUTH SCREEN
-═══════════════════════════════════════════════════ */
-#auth-screen {
-  position: fixed;
-  inset: 0;
-  z-index: 9000;
-  background: radial-gradient(ellipse at 50% 30%, #1a1a35 0%, #0a0a0f 70%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  overflow-y: auto;
+/* ── MODALS ── */
+.screen-modal{
+  position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);backdrop-filter:blur(16px);
+  display:flex;align-items:center;justify-content:center;padding:24px;
+  opacity:0;pointer-events:none;transition:opacity .3s;
 }
-#auth-screen.hidden { display: none; }
+.screen-modal.open{opacity:1;pointer-events:all}
+.screen-modal-inner{
+  background:var(--s2);border:1px solid rgba(255,215,0,.2);border-radius:24px;
+  width:min(500px,100%);max-height:90vh;overflow-y:auto;
+  box-shadow:0 32px 80px rgba(0,0,0,.9);
+}
+.sm-header{
+  padding:20px 24px 16px;border-bottom:1px solid rgba(255,215,0,.1);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;background:var(--s2);z-index:1;border-radius:24px 24px 0 0;
+}
+.sm-title{font-family:'Orbitron';font-size:14px;color:var(--g);letter-spacing:2px}
+.sm-close{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.07);border:none;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.sm-close:hover{background:rgba(255,215,0,.1);color:var(--g)}
+.sm-body{padding:24px}
+.sm-desc{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:20px;font-weight:300}
+.sm-feat-list{display:flex;flex-direction:column;gap:10px}
+.sm-feat{display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--s3);border-radius:12px;border:1px solid rgba(255,255,255,.05)}
+.sm-feat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.sm-feat-text{font-size:14px;color:var(--text);line-height:1.5;font-weight:300}
 
-.auth-logo {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 32px;
-  font-weight: 900;
-  color: var(--gold);
-  text-shadow: 0 0 30px rgba(255,215,0,0.5);
-  letter-spacing: 4px;
-  margin-bottom: 6px;
-  text-align: center;
+/* responsive */
+@media(max-width:600px){
+  .screens-grid{grid-template-columns:1fr 1fr}
+  .feat-grid{grid-template-columns:1fr}
+  .tech-grid{grid-template-columns:repeat(3,1fr)}
 }
-.auth-tagline {
-  font-size: 12px;
-  color: var(--text-muted);
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  text-align: center;
-  margin-bottom: 36px;
-}
-
-.auth-card {
-  background: linear-gradient(145deg, #1a1a2e, #12121a);
-  border: 1.5px solid rgba(255,215,0,0.25);
-  border-radius: 20px;
-  padding: 28px 24px;
-  width: min(380px, 100%);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(255,215,0,0.08);
-}
-
-.auth-tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 24px;
-  background: rgba(255,255,255,0.03);
-  border-radius: 10px;
-  padding: 4px;
-}
-.auth-tab {
-  flex: 1;
-  padding: 8px;
-  border-radius: 7px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  font-family: 'Orbitron', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.auth-tab.active {
-  background: linear-gradient(135deg, #B8860B, #FFD700);
-  color: #0a0a0f;
-}
-
-.auth-form { display: none; }
-.auth-form.active { display: block; }
-
-.auth-field {
-  margin-bottom: 14px;
-}
-.auth-label {
-  display: block;
-  font-size: 11px;
-  color: var(--text-muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-.auth-input {
-  width: 100%;
-  background: rgba(255,215,0,0.04);
-  border: 1.5px solid rgba(255,215,0,0.2);
-  border-radius: 10px;
-  padding: 12px 14px;
-  color: var(--text);
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.auth-input:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 12px rgba(255,215,0,0.15);
-}
-
-.auth-btn {
-  width: 100%;
-  margin-top: 6px;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #B8860B, #FFD700, #B8860B);
-  background-size: 200% 100%;
-  color: #0a0a0f;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 2px;
-  cursor: pointer;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
-}
-.auth-btn:hover { background-position: right center; filter: brightness(1.1); }
-.auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.auth-btn.loading::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.auth-error {
-  background: rgba(255,23,68,0.1);
-  border: 1px solid rgba(255,23,68,0.3);
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: var(--red);
-  text-align: center;
-  margin-bottom: 14px;
-  display: none;
-}
-.auth-error.show { display: block; }
-
-/* ═══════════════════════════════════════════════════
-   TOP BAR
-═══════════════════════════════════════════════════ */
-#topbar {
-  height: var(--bar-h);
-  background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #0d0d1a 100%);
-  border-bottom: 2px solid rgba(255,215,0,0.3);
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  position: relative;
-  z-index: 100;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-  flex-shrink: 0;
-}
-
-.bar-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  cursor: pointer;
-  position: relative;
-  border-right: 1px solid rgba(255,215,0,0.1);
-  transition: background 0.2s;
-}
-.bar-item:last-child { border-right: none; }
-.bar-item:hover { background: rgba(255,215,0,0.05); }
-
-.bar-label {
-  font-size: 10px;
-  color: var(--text-muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.bar-value {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--gold);
-  line-height: 1.2;
-}
-
-#timer-value { font-size: 20px; color: var(--gold); transition: color 0.3s; }
-#timer-value.urgent { color: var(--red); animation: pulse-red 0.5s infinite alternate; }
-@keyframes pulse-red { from { color: var(--red); } to { color: #ff6666; } }
-
-#status-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  margin-bottom: 3px;
-}
-#status-dot.connected { background: var(--green); }
-#status-dot.searching { background: var(--accent); animation: blink 1s infinite; }
-#status-dot.found { background: var(--green); }
-#status-dot.error { background: var(--red); }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-.bar-balance { color: var(--green); }
-.menu-icon { display: flex; flex-direction: column; gap: 4px; cursor: pointer; align-items: center; }
-.menu-icon span { display: block; width: 22px; height: 2px; background: var(--gold); border-radius: 2px; transition: all 0.3s; }
-
-/* ═══════════════════════════════════════════════════
-   MAIN AREA
-═══════════════════════════════════════════════════ */
-#main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 16px 24px;
-  position: relative;
-  background: radial-gradient(ellipse at center, #16162a 0%, #0a0a0f 70%);
-  overflow: hidden;
-}
-
-/* ═══════════════════════════════════════════════════
-   MULTIPLIER BUTTONS
-═══════════════════════════════════════════════════ */
-#multipliers {
-  display: flex;
-  gap: 10px;
-  align-self: flex-end;
-  margin-right: 4px;
-}
-
-.mult-btn {
-  width: 52px; height: 32px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(255,215,0,0.3);
-  background: rgba(255,215,0,0.05);
-  color: var(--text-muted);
-  font-family: 'Orbitron', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  overflow: visible;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.mult-btn.active { border-color: var(--gold); background: rgba(255,215,0,0.15); color: var(--gold); box-shadow: 0 0 12px rgba(255,215,0,0.4); }
-.mult-btn.locked { opacity: 0.35; cursor: not-allowed; }
-.mult-btn::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.1); opacity: 0; transition: opacity 0.2s; border-radius: 999px; }
-.mult-btn:not(.locked):hover::after { opacity: 1; }
-.mult-btn .tip {
-  position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
-  background: rgba(10,10,20,0.95); border: 1px solid var(--gold); border-radius: 12px;
-  padding: 6px 12px; font-size: 10px; white-space: nowrap; color: var(--gold);
-  font-family: 'Rajdhani'; pointer-events: none; opacity: 0; transition: opacity 0.2s;
-  z-index: 200; backdrop-filter: blur(8px);
-}
-.mult-btn:hover .tip { opacity: 1; }
-
-/* ═══════════════════════════════════════════════════
-   SCORE + BUZZER
-═══════════════════════════════════════════════════ */
-#score-display {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 48px;
-  font-weight: 900;
-  color: var(--gold);
-  text-shadow: 0 0 30px rgba(255,215,0,0.6), 0 0 60px rgba(255,215,0,0.3);
-  line-height: 1;
-  letter-spacing: -2px;
-}
-#score-display.tapped { animation: score-pop 0.15s ease-out; }
-@keyframes score-pop { 0%{transform:scale(1)} 50%{transform:scale(1.12)} 100%{transform:scale(1)} }
-
-#mult-label { font-size: 13px; color: var(--accent); letter-spacing: 2px; text-align: center; margin-top: 4px; height: 18px; }
-
-#buzzer-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-
-#buzzer {
-  width: min(240px, 56vw);
-  height: min(240px, 56vw);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff9c4 0%, #FFD700 30%, #B8860B 65%, #7a5c00 100%);
-  box-shadow: 0 0 0 6px rgba(255,215,0,0.15), 0 0 0 12px rgba(255,215,0,0.08), 0 8px 40px rgba(255,215,0,0.5), 0 20px 60px rgba(0,0,0,0.7), inset 0 -10px 30px rgba(0,0,0,0.4), inset 0 8px 20px rgba(255,255,255,0.3);
-  cursor: pointer;
-  transition: transform 0.08s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.08s;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  touch-action: manipulation;
-}
-#buzzer::before {
-  content: '';
-  position: absolute;
-  width: 40%; height: 40%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%);
-  top: 14%; left: 18%;
-}
-#buzzer::after {
-  content: '★';
-  font-size: min(60px, 14vw);
-  color: rgba(255,255,255,0.25);
-  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-#buzzer:active, #buzzer.pressed {
-  transform: scale(0.88) translateY(4px);
-  box-shadow: 0 0 0 6px rgba(255,215,0,0.1), 0 4px 20px rgba(255,215,0,0.4), 0 8px 30px rgba(0,0,0,0.8), inset 0 -5px 15px rgba(0,0,0,0.5), inset 0 4px 10px rgba(255,255,255,0.2);
-}
-#buzzer.disabled { filter: grayscale(0.6) brightness(0.6); cursor: not-allowed; }
-
-.ripple {
-  position: absolute;
-  border-radius: 50%;
-  border: 2px solid var(--gold);
-  animation: ripple-out 0.5s ease-out forwards;
-  pointer-events: none;
-}
-@keyframes ripple-out {
-  from { width: 50%; height: 50%; opacity: 0.8; top: 25%; left: 25%; }
-  to { width: 150%; height: 150%; opacity: 0; top: -25%; left: -25%; }
-}
-
-/* ═══════════════════════════════════════════════════
-   STAKE BUTTON
-═══════════════════════════════════════════════════ */
-#stake-btn {
-  background: linear-gradient(135deg, #B8860B, #FFD700, #B8860B);
-  color: #0a0a0f;
-  border: none;
-  border-radius: 999px;
-  padding: 12px 48px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 3px;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(255,215,0,0.4);
-  transition: all 0.2s;
-  text-transform: uppercase;
-  margin-top: 8px;
-}
-#stake-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255,215,0,0.5); }
-#stake-btn:active { transform: translateY(0); }
-#stake-btn.playing { background: linear-gradient(135deg, #333, #555, #333); color: #888; cursor: not-allowed; box-shadow: none; }
-
-/* ═══════════════════════════════════════════════════
-   OVERLAYS & MODALS
-═══════════════════════════════════════════════════ */
-.overlay {
-  position: fixed; inset: 0; z-index: 1000;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(8px);
-  opacity: 0; pointer-events: none; transition: opacity 0.3s;
-}
-.overlay.show { opacity: 1; pointer-events: all; }
-
-.modal {
-  background: linear-gradient(145deg, #1a1a2e, #12121a);
-  border: 1.5px solid rgba(255,215,0,0.3);
-  border-radius: 20px;
-  padding: 28px 24px;
-  width: min(380px, 92vw);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(255,215,0,0.1);
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal h2 {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 18px;
-  color: var(--gold);
-  margin-bottom: 20px;
-  letter-spacing: 2px;
-  text-align: center;
-}
-
-.modal input, .modal select {
-  width: 100%;
-  background: rgba(255,215,0,0.05);
-  border: 1.5px solid rgba(255,215,0,0.3);
-  border-radius: 12px;
-  padding: 14px 16px;
-  color: var(--text);
-  font-family: 'Orbitron', sans-serif;
-  font-size: 16px;
-  text-align: center;
-  outline: none;
-  margin-bottom: 12px;
-  transition: border-color 0.2s;
-  -webkit-appearance: none;
-}
-.modal input:focus, .modal select:focus { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,215,0,0.2); }
-.modal select option { background: #1a1a2e; color: var(--text); }
-
-.modal-actions { display: flex; gap: 10px; margin-top: 4px; }
-
-.btn-primary {
-  flex: 1; padding: 12px; border: none; border-radius: 12px;
-  background: linear-gradient(135deg, #B8860B, #FFD700);
-  color: #0a0a0f; font-family: 'Orbitron', sans-serif;
-  font-size: 12px; font-weight: 700; letter-spacing: 1px;
-  cursor: pointer; transition: all 0.2s;
-}
-.btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-.btn-secondary {
-  flex: 1; padding: 12px;
-  border: 1.5px solid rgba(255,215,0,0.3); border-radius: 12px;
-  background: transparent; color: var(--text-muted);
-  font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700;
-  letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
-}
-.btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
-
-/* ═══════════════════════════════════════════════════
-   MENU POPUP
-═══════════════════════════════════════════════════ */
-#menu-popup {
-  position: fixed;
-  top: calc(var(--bar-h) + 8px); right: 12px;
-  z-index: 500;
-  background: linear-gradient(145deg, #1a1a2e, #0d0d1a);
-  border: 1.5px solid rgba(255,215,0,0.3);
-  border-radius: 16px; padding: 8px; min-width: 200px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-  opacity: 0; pointer-events: none;
-  transform: translateY(-10px);
-  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
-}
-#menu-popup.show { opacity: 1; pointer-events: all; transform: translateY(0); }
-
-.menu-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px; border-radius: 10px;
-  cursor: pointer; font-size: 16px; font-weight: 600; letter-spacing: 1px;
-  color: var(--text); transition: all 0.2s;
-}
-.menu-item:hover { color: var(--gold); background: rgba(255,215,0,0.08); }
-.menu-icon-el { font-size: 18px; }
-.menu-divider { height: 1px; background: rgba(255,215,0,0.1); margin: 4px 8px; }
-
-/* ═══════════════════════════════════════════════════
-   RESULT SCREEN
-═══════════════════════════════════════════════════ */
-#result-overlay .modal { text-align: center; }
-#result-title { font-size: 28px; margin-bottom: 8px; }
-#result-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 16px; font-family: 'Rajdhani'; }
-#result-scores { display: flex; justify-content: center; gap: 24px; margin: 12px 0 20px; }
-.result-score-box { background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); border-radius: 12px; padding: 12px 20px; }
-.result-score-box .label { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 4px; }
-.result-score-box .val { font-family: 'Orbitron'; font-size: 24px; font-weight: 900; color: var(--gold); }
-#result-new-balance { font-family: 'Orbitron'; font-size: 13px; color: var(--green); text-align: center; margin-bottom: 16px; letter-spacing: 1px; }
-#result-opp-name { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 4px; }
-
-/* Confetti */
-.confetti-piece { position: fixed; width: 8px; height: 8px; border-radius: 2px; animation: confetti-fall linear forwards; z-index: 2000; pointer-events: none; }
-@keyframes confetti-fall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
-
-/* Searching */
-#searching-overlay .modal { text-align: center; }
-.spinner { width: 48px; height: 48px; border: 3px solid rgba(255,215,0,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-#vs-badge { font-family: 'Orbitron'; font-size: 11px; color: var(--text-muted); text-align: center; letter-spacing: 2px; padding: 4px 0; }
-
-/* ═══════════════════════════════════════════════════
-   PREMIUM MODAL
-═══════════════════════════════════════════════════ */
-.premium-tier {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px; border-radius: 12px;
-  border: 1.5px solid rgba(255,255,255,0.1);
-  margin-bottom: 10px; cursor: pointer; transition: all 0.2s;
-  position: relative;
-}
-.premium-tier:hover { border-color: var(--gold); background: rgba(255,215,0,0.05); }
-.premium-tier.owned { border-color: rgba(0,230,118,0.4); background: rgba(0,230,118,0.05); cursor: default; }
-.premium-tier .tier-icon { font-size: 24px; }
-.premium-tier .tier-name { font-family: 'Orbitron'; font-size: 13px; font-weight: 700; }
-.premium-tier .tier-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-.premium-tier .tier-price { margin-left: auto; font-family: 'Orbitron'; font-size: 12px; color: var(--gold); white-space: nowrap; }
-.tier-badge { position: absolute; top: -6px; right: 12px; background: var(--green); color: #000; font-family: 'Orbitron'; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 999px; letter-spacing: 1px; }
-
-/* ═══════════════════════════════════════════════════
-   LEADERBOARD MODAL
-═══════════════════════════════════════════════════ */
-.lb-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 12px; border-radius: 10px;
-  transition: background 0.2s;
-}
-.lb-row:hover { background: rgba(255,215,0,0.05); }
-.lb-rank { font-family: 'Orbitron'; font-size: 14px; font-weight: 700; color: var(--text-muted); width: 24px; text-align: center; flex-shrink: 0; }
-.lb-rank.gold { color: var(--gold); }
-.lb-rank.silver { color: var(--silver); }
-.lb-rank.bronze { color: var(--bronze); }
-.lb-user { flex: 1; }
-.lb-name { font-weight: 700; font-size: 15px; }
-.lb-stat { font-size: 12px; color: var(--text-muted); }
-.lb-wins { font-family: 'Orbitron'; font-size: 14px; color: var(--gold); font-weight: 700; }
-.lb-me { background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.2); border-radius: 10px; }
-
-/* ═══════════════════════════════════════════════════
-   HISTORY MODAL
-═══════════════════════════════════════════════════ */
-.hist-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255,215,0,0.08);
-}
-.hist-row:last-child { border-bottom: none; }
-.hist-result { font-family: 'Orbitron'; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; flex-shrink: 0; }
-.hist-result.win { background: rgba(0,230,118,0.15); color: var(--green); }
-.hist-result.loss { background: rgba(255,23,68,0.15); color: var(--red); }
-.hist-result.tie { background: rgba(255,215,0,0.15); color: var(--gold); }
-.hist-detail { flex: 1; }
-.hist-opp { font-size: 14px; font-weight: 600; }
-.hist-score { font-size: 12px; color: var(--text-muted); }
-.hist-amount { font-family: 'Orbitron'; font-size: 12px; color: var(--gold); text-align: right; }
-.hist-date { font-size: 11px; color: var(--text-muted); }
-
-/* ═══════════════════════════════════════════════════
-   DEPOSIT/WITHDRAW PROVIDER SELECT
-═══════════════════════════════════════════════════ */
-.provider-select {
-  display: flex; gap: 8px; margin-bottom: 12px;
-}
-.provider-btn {
-  flex: 1; padding: 10px 4px; border-radius: 10px;
-  border: 1.5px solid rgba(255,215,0,0.2);
-  background: transparent; color: var(--text-muted);
-  font-family: 'Rajdhani'; font-size: 13px; font-weight: 700;
-  cursor: pointer; transition: all 0.2s; text-align: center;
-}
-.provider-btn:hover { border-color: var(--gold); color: var(--gold); }
-.provider-btn.active { border-color: var(--gold); background: rgba(255,215,0,0.1); color: var(--gold); }
-.provider-btn small { display: block; font-size: 10px; opacity: 0.7; margin-top: 1px; }
-
-/* ═══════════════════════════════════════════════════
-   NETWORK BANNER
-═══════════════════════════════════════════════════ */
-#network-banner {
-  position: fixed; top: 0; left: 0; right: 0;
-  z-index: 8000; text-align: center;
-  font-family: 'Orbitron'; font-size: 11px; letter-spacing: 2px;
-  padding: 8px; font-weight: 700;
-  transform: translateY(-100%);
-  transition: transform 0.3s ease;
-}
-#network-banner.show { transform: translateY(0); }
-#network-banner.offline { background: rgba(255,23,68,0.9); color: #fff; }
-#network-banner.online { background: rgba(0,230,118,0.9); color: #000; }
-
-/* ═══════════════════════════════════════════════════
-   LOADING OVERLAY
-═══════════════════════════════════════════════════ */
-#loading-screen {
-  position: fixed; inset: 0; z-index: 9999;
-  background: var(--bg);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 20px; transition: opacity 0.5s;
-}
-#loading-screen.fade { opacity: 0; pointer-events: none; }
-.load-logo { font-family: 'Orbitron'; font-size: 28px; font-weight: 900; color: var(--gold); letter-spacing: 4px; text-shadow: 0 0 30px rgba(255,215,0,0.5); }
-.load-bar { width: 160px; height: 3px; background: rgba(255,215,0,0.2); border-radius: 2px; overflow: hidden; }
-.load-progress { height: 100%; background: var(--gold); border-radius: 2px; animation: load-anim 1.5s ease-in-out infinite; }
-@keyframes load-anim { 0%{width:0%;margin-left:0} 50%{width:60%;margin-left:20%} 100%{width:0%;margin-left:100%} }
-
-/* ═══════════════════════════════════════════════════
-   INSTALL BANNER
-═══════════════════════════════════════════════════ */
-#install-banner {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 7000;
-  background: linear-gradient(135deg, #1a1a2e, #12121a);
-  border-top: 2px solid rgba(255,215,0,0.3);
-  padding: 14px 20px;
-  display: flex; align-items: center; gap: 14px;
-  transform: translateY(100%); transition: transform 0.3s ease;
-}
-#install-banner.show { transform: translateY(0); }
-#install-banner .install-text { flex: 1; font-size: 13px; }
-#install-banner .install-title { font-family: 'Orbitron'; font-size: 12px; color: var(--gold); letter-spacing: 1px; }
-#install-banner .install-sub { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
-
-/* ═══════════════════════════════════════════════════
-   MISC UTILITIES
-═══════════════════════════════════════════════════ */
-.latency-dot {
-  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--green); margin-left: 4px; vertical-align: middle;
-}
-.latency-dot.medium { background: var(--gold); }
-.latency-dot.high { background: var(--red); }
-
-#opp-name-display {
-  font-family: 'Orbitron'; font-size: 11px; color: var(--accent);
-  letter-spacing: 2px; text-align: center; margin-top: 4px; height: 16px;
-}
+@media(max-width:400px){.screens-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════
-     LOADING SCREEN
-═══════════════════════════════════════════════ -->
-<div id="loading-screen">
-  <div class="load-logo">BUZZERBET</div>
-  <div class="load-bar"><div class="load-progress"></div></div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     NETWORK BANNER
-═══════════════════════════════════════════════ -->
-<div id="network-banner">📡 RECONNECTING…</div>
-
-<!-- ═══════════════════════════════════════════════
-     INSTALL BANNER
-═══════════════════════════════════════════════ -->
-<div id="install-banner">
-  <span style="font-size:28px">📲</span>
-  <div class="install-text">
-    <div class="install-title">INSTALL BUZZERBET</div>
-    <div class="install-sub">Add to home screen for the best experience</div>
-  </div>
-  <button class="btn-primary" style="flex:0;padding:10px 16px;font-size:11px" id="install-yes">INSTALL</button>
-  <button class="btn-secondary" style="flex:0;padding:10px 14px;font-size:11px" id="install-no">✕</button>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     AUTH SCREEN
-═══════════════════════════════════════════════ -->
-<div id="auth-screen">
-  <div class="auth-logo">BUZZERBET</div>
-  <div class="auth-tagline">Tap. Beat. Win.</div>
-
-  <div class="auth-card">
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">LOGIN</button>
-      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">REGISTER</button>
+<!-- ═══════════ HERO ═══════════ -->
+<div id="hero">
+  <canvas id="particles"></canvas>
+  <div class="hero-tag">COMPLETE PROJECT — READY TO DEPLOY</div>
+  <div class="hero-title">BUZZERBET</div>
+  <div class="hero-sub">Real-time tap betting · Ghana mobile money · Full-stack PWA</div>
+  <div class="stat-row">
+    <div class="stat-pill">
+      <div class="stat-num" id="s-lines">0</div>
+      <div class="stat-lbl">Lines of Code</div>
     </div>
+    <div class="stat-pill">
+      <div class="stat-num">28</div>
+      <div class="stat-lbl">Files</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-num">7</div>
+      <div class="stat-lbl">Screens</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-num">14</div>
+      <div class="stat-lbl">npm Packages</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-num">4</div>
+      <div class="stat-lbl">Payment Providers</div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    SCROLL TO EXPLORE
+    <div class="scroll-arrow"></div>
+  </div>
+</div>
 
-    <!-- LOGIN FORM -->
-    <div class="auth-form active" id="form-login">
-      <div id="login-error" class="auth-error"></div>
-      <div class="auth-field">
-        <label class="auth-label">Email</label>
-        <input class="auth-input" id="login-email" type="email" autocomplete="email" placeholder="you@email.com">
+<hr class="divider">
+
+<!-- ═══════════ SCREENS ═══════════ -->
+<div id="screens-section">
+  <div class="screens-inner">
+    <div class="section-eyebrow">SCREENS & FEATURES</div>
+    <div class="section-title">Every screen, built &amp; wired</div>
+    <div class="screens-grid" id="screens-grid">
+
+      <!-- Auth -->
+      <div class="screen-card" onclick="openModal('m-login')">
+        <span class="sc-badge badge-auth">AUTH</span>
+        <div class="sc-preview">
+          <div class="mock m-auth">
+            <div class="m-auth-logo" style="font-family:Orbitron;font-size:18px;font-weight:900;color:#FFD700;text-align:center;padding-top:22px;letter-spacing:3px;text-shadow:0 0 20px rgba(255,215,0,.5)">BUZZERBET</div>
+            <div style="font-size:8px;color:#555570;text-align:center;letter-spacing:3px;margin-top:3px">TAP. BEAT. WIN.</div>
+            <div class="m-auth-card" style="margin:12px 14px 0;background:#1a1a2e;border:1px solid rgba(255,215,0,.2);border-radius:12px;padding:12px">
+              <div style="display:flex;gap:3px;background:rgba(255,255,255,.03);border-radius:7px;padding:3px;margin-bottom:10px">
+                <div style="flex:1;padding:4px;border-radius:5px;background:linear-gradient(135deg,#B8860B,#FFD700);font-family:Orbitron;font-size:7px;font-weight:700;color:#0a0a0f;text-align:center">LOGIN</div>
+                <div style="flex:1;padding:4px;text-align:center;font-family:Orbitron;font-size:7px;color:#555570">REGISTER</div>
+              </div>
+              <div style="background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.18);border-radius:6px;height:20px;margin-bottom:7px"></div>
+              <div style="background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.18);border-radius:6px;height:20px;margin-bottom:10px"></div>
+              <div style="background:linear-gradient(135deg,#B8860B,#FFD700);height:22px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:Orbitron;font-size:7px;color:#0a0a0f;font-weight:700;letter-spacing:2px">LOGIN</div>
+            </div>
+          </div>
+        </div>
+        <div class="sc-body">
+          <div class="sc-title">AUTHENTICATION</div>
+          <div class="sc-desc">JWT login & registration with Ghana phone validation. Auto-reconnects on return.</div>
+        </div>
       </div>
-      <div class="auth-field">
-        <label class="auth-label">Password</label>
-        <input class="auth-input" id="login-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+
+      <!-- Game -->
+      <div class="screen-card" onclick="openModal('m-game-modal')">
+        <span class="sc-badge badge-live">LIVE</span>
+        <div class="sc-preview">
+          <div class="mock m-game">
+            <div class="m-bar">
+              <div class="m-bar-cell"><div class="m-bar-lbl">TIME</div><div class="m-bar-val" id="mock-timer">60</div></div>
+              <div class="m-bar-cell"><div class="m-bar-dot"></div><div class="m-bar-lbl" style="font-size:5px;color:#00e676">PLAYING</div></div>
+              <div class="m-bar-cell"><div class="m-bar-lbl">BALANCE</div><div class="m-bar-val" style="color:#00e676">₵150</div></div>
+              <div class="m-bar-cell"><div style="display:flex;flex-direction:column;gap:2px;align-items:center"><div style="width:12px;height:1px;background:#FFD700;border-radius:1px"></div><div style="width:12px;height:1px;background:#FFD700;border-radius:1px"></div><div style="width:12px;height:1px;background:#FFD700;border-radius:1px"></div></div><div class="m-bar-lbl">MENU</div></div>
+            </div>
+            <div class="m-mults">
+              <div class="m-mult on">x1</div>
+              <div class="m-mult on" style="border-color:#FFD700;background:rgba(255,215,0,.15);color:#FFD700">x2</div>
+              <div class="m-mult">x3</div>
+              <div class="m-mult">x4</div>
+            </div>
+            <div class="m-score" id="mock-score">0</div>
+            <div style="font-size:8px;color:#ff6b00;text-align:center;letter-spacing:2px;height:12px;margin-top:2px" id="mock-mult-label"></div>
+            <div style="display:flex;align-items:center;gap:4px;justify-content:center;margin-top:4px;opacity:.7">
+              <span style="font-size:8px;color:#555570;letter-spacing:1px">kwame</span>
+              <span style="font-family:Orbitron;font-size:7px;color:#555570">VS</span>
+              <span style="font-family:Orbitron;font-size:10px;color:#ff6b00" id="mock-opp">0</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:10px">
+              <div class="m-buzzer" id="mock-buzzer">★</div>
+            </div>
+          </div>
+        </div>
+        <div class="sc-body">
+          <div class="sc-title">LIVE GAME ARENA</div>
+          <div class="sc-desc">60s tap battle. Real-time scores via Socket.io. Multipliers, timer, live opponent counter.</div>
+        </div>
       </div>
-      <button class="auth-btn" id="login-btn" onclick="doLogin()">LOGIN</button>
-    </div>
 
-    <!-- REGISTER FORM -->
-    <div class="auth-form" id="form-register">
-      <div id="register-error" class="auth-error"></div>
-      <div class="auth-field">
-        <label class="auth-label">Username</label>
-        <input class="auth-input" id="reg-username" type="text" autocomplete="username" placeholder="kwame123">
+      <!-- Admin -->
+      <div class="screen-card" onclick="openModal('m-admin-modal')">
+        <span class="sc-badge badge-admin">ADMIN</span>
+        <div class="sc-preview">
+          <div class="mock m-admin">
+            <div class="m-sidebar">
+              <div class="m-nav-item active" style="font-size:7px">📊</div>
+              <div class="m-nav-item" style="font-size:7px">⚡</div>
+              <div class="m-nav-item" style="font-size:7px">👥</div>
+              <div class="m-nav-item" style="font-size:7px">💳</div>
+              <div class="m-nav-item" style="font-size:7px">📋</div>
+              <div class="m-nav-item" style="font-size:7px">👑</div>
+              <div class="m-nav-item" style="font-size:7px">⚙️</div>
+            </div>
+            <div class="m-admin-main">
+              <div class="m-admin-topbar">
+                <div class="m-topbar-title">DASHBOARD</div>
+                <div class="m-live-badge"><div class="m-live-dot"></div>3 LIVE</div>
+              </div>
+              <div class="m-stat-row">
+                <div class="m-stat"><div class="m-stat-v">₵42K</div><div class="m-stat-l">REVENUE</div></div>
+                <div class="m-stat"><div class="m-stat-v">284</div><div class="m-stat-l">USERS</div></div>
+                <div class="m-stat"><div class="m-stat-v" style="color:#00e676">156</div><div class="m-stat-l">GAMES</div></div>
+                <div class="m-stat"><div class="m-stat-v" style="color:#cd7f32">47</div><div class="m-stat-l">PREMIUM</div></div>
+              </div>
+              <div class="m-chart">
+                <div class="m-chart-line">
+                  <div class="m-bar-c" style="height:30%"></div>
+                  <div class="m-bar-c" style="height:50%"></div>
+                  <div class="m-bar-c" style="height:40%"></div>
+                  <div class="m-bar-c" style="height:70%"></div>
+                  <div class="m-bar-c" style="height:55%"></div>
+                  <div class="m-bar-c" style="height:80%"></div>
+                  <div class="m-bar-c" style="height:65%"></div>
+                  <div class="m-bar-c" style="height:90%"></div>
+                  <div class="m-bar-c" style="height:75%"></div>
+                  <div class="m-bar-c" style="height:100%;background:rgba(255,215,0,.5)"></div>
+                </div>
+                <svg class="m-line-overlay" viewBox="0 0 100 50" preserveAspectRatio="none">
+                  <polyline points="5,40 15,27 25,32 35,18 45,25 55,12 65,19 75,5 85,14 95,3" fill="none" stroke="#FFD700" stroke-width="1.5" opacity="0.7"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sc-body">
+          <div class="sc-title">ADMIN DASHBOARD</div>
+          <div class="sc-desc">7-page console. Live game monitoring, user management, transactions, revenue charts.</div>
+        </div>
       </div>
-      <div class="auth-field">
-        <label class="auth-label">Email</label>
-        <input class="auth-input" id="reg-email" type="email" autocomplete="email" placeholder="you@email.com">
+
+      <!-- PWA -->
+      <div class="screen-card" onclick="openModal('m-pwa-modal')">
+        <span class="sc-badge badge-pwa">PWA</span>
+        <div class="sc-preview">
+          <div class="mock m-pwa">
+            <div class="m-app-icon">★</div>
+            <div class="m-pwa-title">BUZZERBET</div>
+            <div class="m-pwa-sub">INSTALLABLE · OFFLINE · NATIVE</div>
+            <div class="m-install-banner">
+              <div class="m-install-icon">★</div>
+              <div class="m-install-text">
+                <div class="m-install-t">INSTALL BUZZERBET</div>
+                <div class="m-install-s">Works offline · No app store</div>
+              </div>
+              <button class="m-install-btn">INSTALL</button>
+            </div>
+            <div class="m-pwa-feat">
+              <div class="m-pf"><div class="m-pf-icon">🔔</div><div class="m-pf-lbl">Push Notifs</div></div>
+              <div class="m-pf"><div class="m-pf-icon">📡</div><div class="m-pf-lbl">Offline</div></div>
+              <div class="m-pf"><div class="m-pf-icon">⚡</div><div class="m-pf-lbl">Wake Lock</div></div>
+              <div class="m-pf"><div class="m-pf-icon">📳</div><div class="m-pf-lbl">Haptics</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="sc-body">
+          <div class="sc-title">PROGRESSIVE WEB APP</div>
+          <div class="sc-desc">Installable, offline-capable. Push notifications, background sync, screen wake lock.</div>
+        </div>
       </div>
-      <div class="auth-field">
-        <label class="auth-label">Ghana Phone (for MoMo)</label>
-        <input class="auth-input" id="reg-phone" type="tel" autocomplete="tel" placeholder="0241234567">
+
+      <!-- Payment -->
+      <div class="screen-card" onclick="openModal('m-pay-modal')">
+        <span class="sc-badge badge-pay">PAYMENTS</span>
+        <div class="sc-preview">
+          <div class="mock m-pay">
+            <div class="m-pay-title">DEPOSIT</div>
+            <div class="m-providers">
+              <div class="m-prov sel"><div class="m-prov-name">MTN</div><div class="m-prov-sub">MoMo</div></div>
+              <div class="m-prov"><div class="m-prov-name">VODA</div><div class="m-prov-sub">Cash</div></div>
+              <div class="m-prov"><div class="m-prov-name">AIRTEL</div><div class="m-prov-sub">Tigo</div></div>
+            </div>
+            <div class="m-pay-input"></div>
+            <div class="m-pay-input"></div>
+            <div class="m-pay-btn">DEPOSIT</div>
+            <div style="margin-top:10px;background:var(--s3);border:1px solid rgba(255,215,0,.1);border-radius:8px;padding:8px">
+              <div style="font-family:Orbitron;font-size:7px;color:#FFD700;margin-bottom:5px">PREMIUM PLANS</div>
+              <div style="display:flex;gap:5px">
+                <div style="flex:1;background:rgba(192,192,192,.08);border:1px solid rgba(192,192,192,.2);border-radius:6px;padding:5px;text-align:center">
+                  <div style="font-size:10px">🥈</div>
+                  <div style="font-family:Orbitron;font-size:6px;color:#c0c0d0">SILVER</div>
+                  <div style="font-size:7px;color:#555570">₵29</div>
+                </div>
+                <div style="flex:1;background:rgba(205,127,50,.08);border:1px solid rgba(205,127,50,.3);border-radius:6px;padding:5px;text-align:center">
+                  <div style="font-size:10px">🥉</div>
+                  <div style="font-family:Orbitron;font-size:6px;color:#cd7f32">BRONZE</div>
+                  <div style="font-size:7px;color:#555570">₵49</div>
+                </div>
+                <div style="flex:1;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.3);border-radius:6px;padding:5px;text-align:center">
+                  <div style="font-size:10px">🥇</div>
+                  <div style="font-family:Orbitron;font-size:6px;color:#FFD700">GOLD</div>
+                  <div style="font-size:7px;color:#555570">₵79</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sc-body">
+          <div class="sc-title">PAYMENTS + PREMIUM</div>
+          <div class="sc-desc">MTN MoMo, Vodafone Cash, AirtelTigo, Stripe. Silver/Bronze/Gold premium tiers.</div>
+        </div>
       </div>
-      <div class="auth-field">
-        <label class="auth-label">Password</label>
-        <input class="auth-input" id="reg-pass" type="password" autocomplete="new-password" placeholder="Min 8 characters">
+
+      <!-- Result -->
+      <div class="screen-card" onclick="openModal('m-result-modal')">
+        <span class="sc-badge badge-live">RESULT</span>
+        <div class="sc-preview">
+          <div class="mock m-result">
+            <div class="m-result-card">
+              <div class="m-result-title">🏆 YOU WIN!</div>
+              <div class="m-result-sub">WINNINGS CREDITED</div>
+              <div class="m-score-boxes">
+                <div class="m-sb"><div class="m-sb-label">YOU</div><div class="m-sb-val">247</div></div>
+                <div class="m-sb"><div class="m-sb-label">OPPONENT</div><div class="m-sb-val" style="color:#ff6b00">201</div></div>
+              </div>
+              <div class="m-result-amount">+GH₵100</div>
+              <div class="m-result-btns">
+                <div class="m-rbtn outline">SHARE 📤</div>
+                <div class="m-rbtn fill">PLAY AGAIN</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sc-body">
+          <div class="sc-title">GAME RESULT</div>
+          <div class="sc-desc">Win/loss/draw states with score breakdown, payout display, native share sheet.</div>
+        </div>
       </div>
-      <button class="auth-btn" id="register-btn" onclick="doRegister()">CREATE ACCOUNT</button>
-    </div>
-  </div>
-</div>
 
-<!-- ═══════════════════════════════════════════════
-     MAIN APP
-═══════════════════════════════════════════════ -->
-<!-- TOP BAR -->
-<div id="topbar">
-  <div class="bar-item" title="Time remaining">
-    <span class="bar-label">TIME</span>
-    <span class="bar-value" id="timer-value">60</span>
-  </div>
-  <div class="bar-item" title="Connection status" id="status-bar-item">
-    <div id="status-dot"></div>
-    <span class="bar-label" id="status-text">IDLE</span>
-  </div>
-  <div class="bar-item" title="Available balance" onclick="showOverlay('deposit-overlay')">
-    <span class="bar-label">BALANCE</span>
-    <span class="bar-value bar-balance" id="balance-val">GH₵0</span>
-  </div>
-  <div class="bar-item" id="menu-btn" title="Menu">
-    <div class="menu-icon"><span></span><span></span><span></span></div>
-    <span class="bar-label">MENU</span>
-  </div>
-</div>
-
-<!-- MAIN -->
-<div id="main">
-  <!-- Multipliers top right -->
-  <div id="multipliers">
-    <button class="mult-btn active" id="mult-x1" data-mult="1">x1<span class="tip">Standard</span></button>
-    <button class="mult-btn locked" id="mult-x2" data-mult="2">x2<span class="tip">Silver Premium</span></button>
-    <button class="mult-btn locked" id="mult-x3" data-mult="3">x3<span class="tip">Bronze Premium</span></button>
-    <button class="mult-btn locked" id="mult-x4" data-mult="4">x4<span class="tip">Gold Premium</span></button>
-  </div>
-
-  <!-- Score -->
-  <div style="text-align:center;">
-    <div id="score-display">0</div>
-    <div id="mult-label"></div>
-    <div id="opp-name-display"></div>
-    <div id="vs-badge" style="margin-top:4px; display:none;">
-      <span id="opp-score-inline">OPP: <b>0</b></span>
-    </div>
-  </div>
-
-  <!-- Buzzer -->
-  <div id="buzzer-wrap">
-    <div id="buzzer" class="disabled"></div>
-    <button id="stake-btn">STAKE</button>
-  </div>
-</div>
-
-<!-- MENU POPUP -->
-<div id="menu-popup">
-  <div class="menu-item" id="menu-deposit"><span class="menu-icon-el">💳</span> Deposit</div>
-  <div class="menu-item" id="menu-withdraw"><span class="menu-icon-el">📤</span> Withdraw</div>
-  <div class="menu-item" id="menu-premium"><span class="menu-icon-el">👑</span> Premium</div>
-  <div class="menu-divider"></div>
-  <div class="menu-item" id="menu-leaderboard"><span class="menu-icon-el">🏆</span> Leaderboard</div>
-  <div class="menu-item" id="menu-history"><span class="menu-icon-el">📋</span> Game History</div>
-  <div class="menu-divider"></div>
-  <div class="menu-item" id="menu-logout"><span class="menu-icon-el">🚪</span> Logout</div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     OVERLAYS
-═══════════════════════════════════════════════ -->
-
-<!-- STAKE -->
-<div class="overlay" id="stake-overlay">
-  <div class="modal">
-    <h2>PLACE STAKE</h2>
-    <div style="font-family:Rajdhani;font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:16px;">
-      Balance: <span id="stake-balance-display" style="color:var(--green)">GH₵0</span>
-    </div>
-    <input type="number" id="stake-input" placeholder="Enter amount (GH₵)" min="1" style="font-size:24px">
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;justify-content:center;">
-      <button class="provider-btn" style="flex:0;padding:6px 14px;font-size:12px" onclick="quickStake(5)">GH₵5</button>
-      <button class="provider-btn" style="flex:0;padding:6px 14px;font-size:12px" onclick="quickStake(10)">GH₵10</button>
-      <button class="provider-btn" style="flex:0;padding:6px 14px;font-size:12px" onclick="quickStake(20)">GH₵20</button>
-      <button class="provider-btn" style="flex:0;padding:6px 14px;font-size:12px" onclick="quickStake(50)">GH₵50</button>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-secondary" id="stake-cancel">CANCEL</button>
-      <button class="btn-primary" id="stake-confirm">FIND GAME</button>
-    </div>
-  </div>
-</div>
-
-<!-- SEARCHING -->
-<div class="overlay" id="searching-overlay">
-  <div class="modal">
-    <div class="spinner"></div>
-    <h2>FINDING OPPONENT</h2>
-    <div style="font-family:Rajdhani;font-size:14px;color:var(--text-muted);text-align:center;">
-      Stake: <span id="searching-stake" style="color:var(--gold)">—</span>
-    </div>
-    <div id="search-timer" style="font-family:Orbitron;font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;letter-spacing:2px;"></div>
-    <div style="margin-top:20px;text-align:center">
-      <button class="btn-secondary" id="cancel-search-btn" style="width:100%">CANCEL SEARCH</button>
-    </div>
-  </div>
-</div>
-
-<!-- RESULT -->
-<div class="overlay" id="result-overlay">
-  <div class="modal" style="text-align:center">
-    <h2 id="result-title">—</h2>
-    <div id="result-sub"></div>
-    <div id="result-opp-name"></div>
-    <div id="result-scores">
-      <div class="result-score-box">
-        <div class="label">YOU</div>
-        <div class="val" id="result-your-score">0</div>
+      <!-- Leaderboard -->
+      <div class="screen-card" onclick="openModal('m-lb-modal')">
+        <span class="sc-badge badge-auth">SOCIAL</span>
+        <div class="sc-preview">
+          <div class="mock" style="background:var(--bg);padding:14px">
+            <div style="font-family:Orbitron;font-size:11px;font-weight:700;color:#FFD700;margin-bottom:12px;letter-spacing:2px;text-align:center">🏆 LEADERBOARD</div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;align-items:center;gap:8px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.3);border-radius:8px;padding:7px 10px">
+                <div style="font-size:14px">🥇</div>
+                <div style="flex:1"><div style="font-family:Orbitron;font-size:9px;color:#FFD700">kwame_gh</div><div style="font-size:7px;color:#555570">156 wins · 198 games</div></div>
+                <div style="font-family:Orbitron;font-size:11px;color:#FFD700;font-weight:700">156</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:7px 10px">
+                <div style="font-size:14px">🥈</div>
+                <div style="flex:1"><div style="font-family:Orbitron;font-size:9px;color:#c0c0d0">abena_t</div><div style="font-size:7px;color:#555570">134 wins · 170 games</div></div>
+                <div style="font-family:Orbitron;font-size:11px;color:#c0c0d0;font-weight:700">134</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:7px 10px">
+                <div style="font-size:14px">🥉</div>
+                <div style="flex:1"><div style="font-family:Orbitron;font-size:9px;color:#cd7f32">kofi99</div><div style="font-size:7px;color:#555570">112 wins · 155 games</div></div>
+                <div style="font-family:Orbitron;font-size:11px;color:#cd7f32;font-weight:700">112</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.2);border-radius:8px;padding:7px 10px">
+                <div style="font-family:Orbitron;font-size:9px;color:#555570;width:14px;text-align:center">4</div>
+                <div style="flex:1"><div style="font-family:Orbitron;font-size:9px;color:#00e676">you</div><div style="font-size:7px;color:#555570">89 wins · 120 games</div></div>
+                <div style="font-family:Orbitron;font-size:11px;color:#00e676;font-weight:700">89</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sc-body">
+          <div class="sc-title">LEADERBOARD</div>
+          <div class="sc-desc">Top players ranked by wins. Current player highlighted. Loaded live from the API.</div>
+        </div>
       </div>
-      <div class="result-score-box">
-        <div class="label">OPPONENT</div>
-        <div class="val" id="result-opp-score" style="color:var(--accent)">0</div>
+
+    </div><!-- /screens-grid -->
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════ ARCHITECTURE ═══════════ -->
+<section id="arch-section">
+  <div class="section-eyebrow">ARCHITECTURE</div>
+  <div class="section-title">How it all fits together</div>
+  <div class="arch-wrap">
+    <div class="arch-diagram">
+      <div class="arch-box gold">
+        <div class="arch-box-title">FRONTEND (public/)</div>
+        <div style="font-size:13px;color:var(--muted);font-weight:300;line-height:1.6">Single-page HTML app. Pure JS modules — no build step needed. Connects to backend over HTTP + WebSocket.</div>
+        <div class="arch-tags">
+          <span class="arch-tag lit">index.html</span>
+          <span class="arch-tag lit">admin.html</span>
+          <span class="arch-tag lit">pwa.js</span>
+          <span class="arch-tag lit">sw.js</span>
+          <span class="arch-tag lit">manifest.json</span>
+        </div>
+      </div>
+      <div class="arch-connector"><span class="arch-connector-label">HTTP REST + WebSocket</span></div>
+      <div class="arch-box green">
+        <div class="arch-box-title">BACKEND (backend/)</div>
+        <div style="font-size:13px;color:var(--muted);font-weight:300;line-height:1.6">Express server with Socket.io. Handles auth, payments, matchmaking, game logic, and admin APIs.</div>
+        <div class="arch-tags">
+          <span class="arch-tag lit">server.js</span>
+          <span class="arch-tag lit">gameSocket.js</span>
+          <span class="arch-tag lit">routes/</span>
+          <span class="arch-tag lit">services/</span>
+          <span class="arch-tag lit">middleware/</span>
+        </div>
+      </div>
+      <div class="arch-connector"><span class="arch-connector-label">mysql2 pool</span></div>
+      <div class="arch-box blue">
+        <div class="arch-box-title">DATABASE (MySQL)</div>
+        <div style="font-size:13px;color:var(--muted);font-weight:300;line-height:1.6">5 tables: users, games, transactions, premium_subscriptions, push_subscriptions. Auto-migrated on boot.</div>
+        <div class="arch-tags">
+          <span class="arch-tag">users</span>
+          <span class="arch-tag">games</span>
+          <span class="arch-tag">transactions</span>
+          <span class="arch-tag">premium_subscriptions</span>
+          <span class="arch-tag">push_subscriptions</span>
+        </div>
+      </div>
+      <div class="arch-connector"><span class="arch-connector-label">VAPID · MoMo API · Stripe</span></div>
+      <div class="arch-box orange">
+        <div class="arch-box-title">EXTERNAL SERVICES</div>
+        <div style="font-size:13px;color:var(--muted);font-weight:300;line-height:1.6">MTN MoMo, Vodafone Cash, AirtelTigo Money, Stripe for deposits/withdrawals. web-push for notifications.</div>
+        <div class="arch-tags">
+          <span class="arch-tag">MTN MoMo</span>
+          <span class="arch-tag">Vodafone Cash</span>
+          <span class="arch-tag">AirtelTigo</span>
+          <span class="arch-tag">Stripe</span>
+          <span class="arch-tag">web-push VAPID</span>
+        </div>
       </div>
     </div>
-    <div id="result-new-balance"></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" id="result-share">SHARE 📤</button>
-      <button class="btn-primary" id="result-play-again">PLAY AGAIN</button>
+    <div class="arch-files">
+      <div class="arch-file"><div class="arch-file-icon" style="background:rgba(255,215,0,.1);font-size:16px">🎮</div><div class="arch-file-info"><div class="arch-file-name">backend/socket/gameSocket.js</div><div class="arch-file-desc">Real-time game engine. Matchmaking, scoring, timer, disconnect handling.</div></div><div class="arch-file-lines">131L</div></div>
+      <div class="arch-file"><div class="arch-file-icon" style="background:rgba(0,230,118,.1);font-size:16px">⚙️</div><div class="arch-file-info"><div class="arch-file-name">backend/services/gameService.js</div><div class="arch-file-desc">Business logic. Score validation, multipliers, winner resolution, DB writes.</div></div><div class="arch-file-lines">240L</div></div>
+      <div class="arch-file"><div class="arch-file-icon" style="background:rgba(79,195,247,.1);font-size:16px">💳</div><div class="arch-file-info"><div class="arch-file-name">backend/services/paymentService.js</div><div class="arch-file-desc">Deposit, withdraw, premium subscription. All 4 payment providers.</div></div><div class="arch-file-lines">213L</div></div>
+      <div class="arch-file"><div class="arch-file-icon" style="background:rgba(255,107,0,.1);font-size:16px">🛡️</div><div class="arch-file-info"><div class="arch-file-name">backend/routes/admin.js</div><div class="arch-file-desc">Admin API. Stats, users, transactions, live games, settings, subscriptions.</div></div><div class="arch-file-lines">397L</div></div>
+      <div class="arch-file"><div class="arch-file-icon" style="background:rgba(255,215,0,.1);font-size:16px">🌐</div><div class="arch-file-info"><div class="arch-file-name">public/index.html</div><div class="arch-file-desc">Entire frontend in one file. Auth, game, modals, PWA, Socket.io client.</div></div><div class="arch-file-lines">2120L</div></div>
+      <div class="arch-file"><div class="arch-file-icon" style="background:rgba(192,192,192,.1);font-size:16px">📊</div><div class="arch-file-info"><div class="arch-file-name">public/admin.html</div><div class="arch-file-desc">7-page admin dashboard. Canvas charts, live feed, user modal, settings.</div></div><div class="arch-file-lines">850L</div></div>
+      <div class="arch-file"><div class="arch-file-icon" style="background:rgba(79,195,247,.1);font-size:16px">⚡</div><div class="arch-file-info"><div class="arch-file-name">public/sw.js</div><div class="arch-file-desc">Service worker. Caching strategies, push events, background sync, IDB.</div></div><div class="arch-file-lines">220L</div></div>
+      <div class="arch-file"><div class="arch-file-icon" style="background:rgba(0,230,118,.1);font-size:16px">🔒</div><div class="arch-file-info"><div class="arch-file-name">backend/middleware/auth.js</div><div class="arch-file-desc">JWT verification. Socket.io auth handshake. Admin role guard.</div></div><div class="arch-file-lines">65L</div></div>
     </div>
   </div>
-</div>
+</section>
 
-<!-- DEPOSIT -->
-<div class="overlay" id="deposit-overlay">
-  <div class="modal">
-    <h2>DEPOSIT</h2>
-    <div style="font-family:Rajdhani;font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:14px;">Add funds via Mobile Money</div>
-    <div id="deposit-error" class="auth-error" style="margin-bottom:12px;"></div>
-    <div class="provider-select" id="deposit-providers">
-      <button class="provider-btn active" data-provider="mtn" onclick="selectProvider('deposit','mtn',this)">MTN<small>MoMo</small></button>
-      <button class="provider-btn" data-provider="vodafone" onclick="selectProvider('deposit','vodafone',this)">Voda<small>Cash</small></button>
-      <button class="provider-btn" data-provider="airteltigo" onclick="selectProvider('deposit','airteltigo',this)">Airtel<small>Tigo</small></button>
-    </div>
-    <input type="number" id="deposit-input" placeholder="Amount (GH₵)" min="1">
-    <input type="tel" id="deposit-phone" placeholder="Mobile Money Number (e.g. 0241234567)">
-    <div class="modal-actions">
-      <button class="btn-secondary" id="deposit-cancel">CANCEL</button>
-      <button class="btn-primary" id="deposit-confirm">DEPOSIT</button>
-    </div>
-  </div>
-</div>
+<hr class="divider">
 
-<!-- WITHDRAW -->
-<div class="overlay" id="withdraw-overlay">
-  <div class="modal">
-    <h2>WITHDRAW</h2>
-    <div style="font-family:Rajdhani;font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:14px;">
-      Balance: <span id="withdraw-balance-display" style="color:var(--green)">GH₵0</span>
-    </div>
-    <div id="withdraw-error" class="auth-error" style="margin-bottom:12px;"></div>
-    <div class="provider-select">
-      <button class="provider-btn active" data-provider="mtn" onclick="selectProvider('withdraw','mtn',this)">MTN<small>MoMo</small></button>
-      <button class="provider-btn" data-provider="vodafone" onclick="selectProvider('withdraw','vodafone',this)">Voda<small>Cash</small></button>
-      <button class="provider-btn" data-provider="airteltigo" onclick="selectProvider('withdraw','airteltigo',this)">Airtel<small>Tigo</small></button>
-    </div>
-    <input type="number" id="withdraw-input" placeholder="Amount (GH₵)" min="1">
-    <input type="tel" id="withdraw-phone" placeholder="Mobile Money Number">
-    <div class="modal-actions">
-      <button class="btn-secondary" id="withdraw-cancel">CANCEL</button>
-      <button class="btn-primary" id="withdraw-confirm">WITHDRAW</button>
-    </div>
-  </div>
-</div>
+<!-- ═══════════ FEATURES ═══════════ -->
+<section id="feat-section">
+  <div class="section-eyebrow">BUILT-IN FEATURES</div>
+  <div class="section-title">Everything you need, nothing you don't</div>
+  <div class="feat-grid">
 
-<!-- PREMIUM -->
-<div class="overlay" id="premium-overlay">
-  <div class="modal">
-    <h2>PREMIUM PLANS</h2>
-    <div style="font-family:Rajdhani;font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:16px;">Unlock multipliers for higher tap scores</div>
-    <div id="premium-error" class="auth-error" style="margin-bottom:12px;"></div>
-
-    <div class="premium-tier" data-plan="silver" id="tier-silver" onclick="buyPremium('silver')">
-      <span class="tier-icon">🥈</span>
-      <div>
-        <div class="tier-name" style="color:var(--silver)">SILVER</div>
-        <div class="tier-desc">Unlocks ×2 multiplier (30s burst per game)</div>
+    <div class="feat-card">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">REAL-TIME GAME ENGINE</div>
+      <div class="feat-desc">Socket.io powers every tap. Server-side score validation, 60s countdown, multiplier activation, disconnect handling with grace period.</div>
+      <div class="feat-tags">
+        <span class="arch-tag lit">Socket.io</span>
+        <span class="arch-tag">Server-authoritative</span>
+        <span class="arch-tag">Anti-cheat</span>
       </div>
-      <div class="tier-price">GH₵29/mo</div>
     </div>
-    <div class="premium-tier" data-plan="bronze" id="tier-bronze" onclick="buyPremium('bronze')">
-      <span class="tier-icon">🥉</span>
-      <div>
-        <div class="tier-name" style="color:var(--bronze)">BRONZE</div>
-        <div class="tier-desc">Unlocks ×3 multiplier (30s burst per game)</div>
+
+    <div class="feat-card">
+      <div class="feat-icon">🔗</div>
+      <div class="feat-title">MATCHMAKING</div>
+      <div class="feat-desc">Stake-based queue pairing. Players matched within ±20% of their stake. 30s timeout with automatic balance refund.</div>
+      <div class="feat-tags">
+        <span class="arch-tag">Stake queues</span>
+        <span class="arch-tag">Auto-refund</span>
+        <span class="arch-tag">Cancel support</span>
       </div>
-      <div class="tier-price">GH₵49/mo</div>
     </div>
-    <div class="premium-tier" data-plan="gold" id="tier-gold" onclick="buyPremium('gold')">
-      <span class="tier-icon">🥇</span>
-      <div>
-        <div class="tier-name" style="color:var(--gold)">GOLD</div>
-        <div class="tier-desc">Unlocks ×4 multiplier (30s burst per game)</div>
+
+    <div class="feat-card">
+      <div class="feat-icon">💰</div>
+      <div class="feat-title">4 PAYMENT PROVIDERS</div>
+      <div class="feat-desc">MTN Mobile Money, Vodafone Cash, AirtelTigo Money, and Stripe card. Deposits and withdrawals. Webhook confirmation callbacks.</div>
+      <div class="feat-tags">
+        <span class="arch-tag lit">MTN MoMo</span>
+        <span class="arch-tag lit">Vodafone</span>
+        <span class="arch-tag lit">AirtelTigo</span>
+        <span class="arch-tag lit">Stripe</span>
       </div>
-      <div class="tier-price">GH₵79/mo</div>
     </div>
 
-    <div class="modal-actions" style="margin-top:16px">
-      <button class="btn-secondary" id="premium-cancel" style="width:100%">CLOSE</button>
+    <div class="feat-card">
+      <div class="feat-icon">👑</div>
+      <div class="feat-title">PREMIUM TIERS</div>
+      <div class="feat-desc">Silver (×2), Bronze (×3), Gold (×4) multiplier unlocks. Monthly subscription billing. Tier badge in leaderboard.</div>
+      <div class="feat-tags">
+        <span class="arch-tag">3 tiers</span>
+        <span class="arch-tag">GH₵29–79/mo</span>
+        <span class="arch-tag">Multiplier gates</span>
+      </div>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-icon">📊</div>
+      <div class="feat-title">ADMIN DASHBOARD</div>
+      <div class="feat-desc">7-page console: Revenue charts, live game monitor, user management with ban/balance controls, transaction history, premium subs, maintenance mode.</div>
+      <div class="feat-tags">
+        <span class="arch-tag lit">Canvas charts</span>
+        <span class="arch-tag">Live feed</span>
+        <span class="arch-tag">User modals</span>
+      </div>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-icon">📱</div>
+      <div class="feat-title">PROGRESSIVE WEB APP</div>
+      <div class="feat-desc">Installable with full manifest, offline caching, screen wake lock, haptic feedback on taps, native share API on win, and update banners.</div>
+      <div class="feat-tags">
+        <span class="arch-tag">Lighthouse 100</span>
+        <span class="arch-tag">iOS + Android</span>
+        <span class="arch-tag">No app store</span>
+      </div>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-icon">🔔</div>
+      <div class="feat-title">PUSH NOTIFICATIONS</div>
+      <div class="feat-desc">VAPID web push for game found, win/loss results, deposit confirmed, withdrawal sent, premium expiring. Background refresh every 5 min.</div>
+      <div class="feat-tags">
+        <span class="arch-tag lit">web-push</span>
+        <span class="arch-tag">Periodic sync</span>
+        <span class="arch-tag">6 event types</span>
+      </div>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-icon">🔄</div>
+      <div class="feat-title">BACKGROUND SYNC</div>
+      <div class="feat-desc">Taps during brief disconnects are queued in IndexedDB and replayed the moment the socket reconnects. Zero taps lost.</div>
+      <div class="feat-tags">
+        <span class="arch-tag">IndexedDB queue</span>
+        <span class="arch-tag">Auto-replay</span>
+        <span class="arch-tag">Offline-resilient</span>
+      </div>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-icon">🛡️</div>
+      <div class="feat-title">SECURITY</div>
+      <div class="feat-desc">JWT auth, bcrypt passwords, helmet headers, rate limiting on all routes, Joi input validation, Socket.io handshake auth.</div>
+      <div class="feat-tags">
+        <span class="arch-tag lit">JWT</span>
+        <span class="arch-tag lit">bcrypt</span>
+        <span class="arch-tag lit">helmet</span>
+        <span class="arch-tag">Rate limiting</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════════ TECH STACK ═══════════ -->
+<section id="tech-section">
+  <div class="section-eyebrow">TECH STACK</div>
+  <div class="section-title">14 production dependencies</div>
+  <div class="tech-grid">
+    <div class="tech-item"><div class="tech-icon">🟢</div><div class="tech-name">Node.js</div><div class="tech-ver">>= 18.0</div></div>
+    <div class="tech-item"><div class="tech-icon">🚂</div><div class="tech-name">Express</div><div class="tech-ver">4.18</div></div>
+    <div class="tech-item"><div class="tech-icon">⚡</div><div class="tech-name">Socket.io</div><div class="tech-ver">4.7</div></div>
+    <div class="tech-item"><div class="tech-icon">🐬</div><div class="tech-name">MySQL2</div><div class="tech-ver">3.6</div></div>
+    <div class="tech-item"><div class="tech-icon">🔐</div><div class="tech-name">JWT</div><div class="tech-ver">9.0</div></div>
+    <div class="tech-item"><div class="tech-icon">🔒</div><div class="tech-name">bcryptjs</div><div class="tech-ver">2.4</div></div>
+    <div class="tech-item"><div class="tech-icon">💳</div><div class="tech-name">Stripe</div><div class="tech-ver">14.9</div></div>
+    <div class="tech-item"><div class="tech-icon">📤</div><div class="tech-name">web-push</div><div class="tech-ver">3.6</div></div>
+    <div class="tech-item"><div class="tech-icon">🪖</div><div class="tech-name">helmet</div><div class="tech-ver">7.1</div></div>
+    <div class="tech-item"><div class="tech-icon">🚦</div><div class="tech-name">rate-limit</div><div class="tech-ver">7.1</div></div>
+    <div class="tech-item"><div class="tech-icon">✅</div><div class="tech-name">Joi</div><div class="tech-ver">17.11</div></div>
+    <div class="tech-item"><div class="tech-icon">📝</div><div class="tech-name">winston</div><div class="tech-ver">3.11</div></div>
+    <div class="tech-item"><div class="tech-icon">🌐</div><div class="tech-name">axios</div><div class="tech-ver">1.6</div></div>
+    <div class="tech-item"><div class="tech-icon">🆔</div><div class="tech-name">uuid</div><div class="tech-ver">9.0</div></div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════════ FLOW ═══════════ -->
+<section id="flow-section">
+  <div class="section-eyebrow">GAME FLOW</div>
+  <div class="section-title">From login to payout</div>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <div class="flow-content">
+        <div class="flow-title">REGISTER / LOGIN</div>
+        <div class="flow-desc">User creates account with username, email, Ghana phone, and password. JWT issued on success. Token stored in localStorage, socket connects automatically.</div>
+        <div class="flow-code">POST /api/auth/login → { token, user }</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <div class="flow-content">
+        <div class="flow-title">DEPOSIT FUNDS</div>
+        <div class="flow-desc">Player deposits via MTN MoMo, Vodafone Cash, AirtelTigo, or Stripe card. Balance updated immediately on webhook confirmation. Push notification sent.</div>
+        <div class="flow-code">POST /api/payments/deposit → MoMo prompt</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <div class="flow-content">
+        <div class="flow-title">PLACE A STAKE</div>
+        <div class="flow-desc">Player enters stake amount (GH₵1 min). Stake deducted from balance optimistically. Player enters matchmaking queue for their stake tier.</div>
+        <div class="flow-code">socket.emit('matchmaking:join', { stake: 50 })</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <div class="flow-content">
+        <div class="flow-title">OPPONENT MATCHED</div>
+        <div class="flow-desc">Server finds another player in the same stake range within 30s. Both players receive game:start with opponent name and game ID. Push notification fires if app is in background.</div>
+        <div class="flow-code">socket.on('game:start', { gameId, opponentName, stake })</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">5</div>
+      <div class="flow-content">
+        <div class="flow-title">TAP THE BUZZER</div>
+        <div class="flow-desc">60 seconds of frantic tapping. Every tap emits to the server which validates and increments score. Opponent's live score shown. Premium players activate multipliers.</div>
+        <div class="flow-code">socket.emit('game:tap') → game:score_update</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">6</div>
+      <div class="flow-content">
+        <div class="flow-title">RESULT + PAYOUT</div>
+        <div class="flow-desc">Server calculates winner server-side. Winner receives 2× their stake. Tie returns both stakes. Result modal shows scores. Confetti on win. Share button triggers native share sheet.</div>
+        <div class="flow-code">socket.on('game:over', { won, yourScore, newBalance })</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">7</div>
+      <div class="flow-content">
+        <div class="flow-title">WITHDRAW WINNINGS</div>
+        <div class="flow-desc">Player withdraws to their Mobile Money account. Admin can monitor all transactions in the dashboard. Balance visible in top bar at all times.</div>
+        <div class="flow-code">POST /api/payments/withdraw → MoMo transfer</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════════ LAUNCH ═══════════ -->
+<div id="launch-section">
+  <div style="max-width:700px;margin:0 auto">
+    <div class="section-eyebrow" style="text-align:center">DEPLOYMENT</div>
+    <div class="launch-title">Ship in 3 commands</div>
+    <div class="launch-sub">Runs on any Node.js host — Render, Railway, DigitalOcean, VPS. Needs a MySQL database and your .env credentials.</div>
+    <div class="cmd-block">
+      <div><span class="cmd-comment"># 1. Install dependencies</span></div>
+      <div><span class="cmd-prompt">$ </span><span class="cmd-text">npm install</span></div>
+      <div>&nbsp;</div>
+      <div><span class="cmd-comment"># 2. Set up database tables</span></div>
+      <div><span class="cmd-prompt">$ </span><span class="cmd-text">npm run migrate && npm run migrate:admin</span></div>
+      <div>&nbsp;</div>
+      <div><span class="cmd-comment"># 3. Start the server</span></div>
+      <div><span class="cmd-prompt">$ </span><span class="cmd-text">npm start</span></div>
+    </div>
+    <div class="launch-note">Requires: Node ≥18 · MySQL 8+ · .env with DB credentials + VAPID keys + payment API keys</div>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-logo">BUZZERBET</div>
+  <div class="foot-sub">FULL-STACK PWA · GHANA · BUILT ENTIRELY WITH CLAUDE</div>
+</footer>
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<div class="screen-modal" id="m-login">
+  <div class="screen-modal-inner">
+    <div class="sm-header"><div class="sm-title">AUTHENTICATION</div><button class="sm-close" onclick="closeModal('m-login')">✕</button></div>
+    <div class="sm-body">
+      <div class="sm-desc">JWT-based auth with bcrypt password hashing. On login, a signed token is stored in localStorage and the Socket.io client connects immediately using it as a handshake credential.</div>
+      <div class="sm-feat-list">
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#FFD700"></div><div class="sm-feat-text"><strong>Login & Registration</strong> — Username, email, Ghana phone number, password. Phone validated against GH format regex.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#00e676"></div><div class="sm-feat-text"><strong>Auto-reconnect</strong> — On page load, existing token is verified via <code>/api/auth/profile</code>. User skips auth screen if session is valid.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#4fc3f7"></div><div class="sm-feat-text"><strong>JWT expiry handling</strong> — 401 responses clear the token, disconnect the socket, and return the user to the auth screen automatically.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#ff6b00"></div><div class="sm-feat-text"><strong>Joi validation</strong> — All inputs validated server-side with detailed error messages returned to the UI.</div></div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- LEADERBOARD -->
-<div class="overlay" id="leaderboard-overlay">
-  <div class="modal">
-    <h2>🏆 LEADERBOARD</h2>
-    <div id="lb-loading" style="text-align:center;padding:20px;color:var(--text-muted)">Loading…</div>
-    <div id="lb-list"></div>
-    <div class="modal-actions" style="margin-top:16px">
-      <button class="btn-secondary" id="lb-close" style="width:100%">CLOSE</button>
+<div class="screen-modal" id="m-game-modal">
+  <div class="screen-modal-inner">
+    <div class="sm-header"><div class="sm-title">LIVE GAME ARENA</div><button class="sm-close" onclick="closeModal('m-game-modal')">✕</button></div>
+    <div class="sm-body">
+      <div class="sm-desc">The core game loop. Two players tap their golden buzzer as fast as possible for 60 seconds. The server is authoritative — all scoring happens server-side to prevent cheating.</div>
+      <div class="sm-feat-list">
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#FFD700"></div><div class="sm-feat-text"><strong>Server-authoritative scoring</strong> — Every tap event is processed server-side. Score updates are sent back via <code>game:score_update</code>. Client shows optimistic increments for responsiveness.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#00e676"></div><div class="sm-feat-text"><strong>Live opponent score</strong> — Opponent's tap count streamed via <code>game:opp_score</code> in real time. Shown in the top area of the arena.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#FFD700"></div><div class="sm-feat-text"><strong>Multipliers</strong> — Premium plans unlock ×2, ×3, ×4 multiplier buttons. Each usable once per game for 30 seconds. Server validates plan eligibility.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#ff3d57"></div><div class="sm-feat-text"><strong>Disconnect handling</strong> — If a player disconnects mid-game, a 10s grace period is given for reconnect. If they don't return, the remaining player wins and receives the stake.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#4fc3f7"></div><div class="sm-feat-text"><strong>Offline tap buffering</strong> — Taps during a brief disconnect are stored in IndexedDB and sent as a batch when the socket reconnects.</div></div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- HISTORY -->
-<div class="overlay" id="history-overlay">
-  <div class="modal">
-    <h2>📋 GAME HISTORY</h2>
-    <div id="hist-loading" style="text-align:center;padding:20px;color:var(--text-muted)">Loading…</div>
-    <div id="hist-list"></div>
-    <div class="modal-actions" style="margin-top:16px">
-      <button class="btn-secondary" id="hist-close" style="width:100%">CLOSE</button>
+<div class="screen-modal" id="m-admin-modal">
+  <div class="screen-modal-inner">
+    <div class="sm-header"><div class="sm-title">ADMIN DASHBOARD</div><button class="sm-close" onclick="closeModal('m-admin-modal')">✕</button></div>
+    <div class="sm-body">
+      <div class="sm-desc">A full 7-page admin console for monitoring and managing the platform. Protected by admin role in JWT. Canvas-based revenue & activity charts with 7D/30D/90D toggles.</div>
+      <div class="sm-feat-list">
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#ff6b00"></div><div class="sm-feat-text"><strong>Dashboard</strong> — Revenue, active users, games today, premium subs. Revenue area chart + payment split donut. Live event feed updating every 3s.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#FFD700"></div><div class="sm-feat-text"><strong>Live Games</strong> — Active match table with real-time score counters and countdown timers. Admin can force-end any game.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#00e676"></div><div class="sm-feat-text"><strong>Users</strong> — Searchable table. User detail modal with balance adjustment, messaging, and ban controls.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#4fc3f7"></div><div class="sm-feat-text"><strong>Transactions</strong> — Filterable by type (deposits, withdrawals, stakes, winnings, premium). Color-coded status badges.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#c0c0d0"></div><div class="sm-feat-text"><strong>Settings</strong> — Game config (duration, stake limits), premium pricing, maintenance mode toggles, platform health stats.</div></div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     JAVASCRIPT
-═══════════════════════════════════════════════ -->
+<div class="screen-modal" id="m-pwa-modal">
+  <div class="screen-modal-inner">
+    <div class="sm-header"><div class="sm-title">PROGRESSIVE WEB APP</div><button class="sm-close" onclick="closeModal('m-pwa-modal')">✕</button></div>
+    <div class="sm-body">
+      <div class="sm-desc">Full PWA stack. Installable on Android and iOS home screens. Works offline with a cached app shell. Service worker handles caching, push events, background sync, and periodic refresh.</div>
+      <div class="sm-feat-list">
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#4fc3f7"></div><div class="sm-feat-text"><strong>Install prompt</strong> — Custom "Add to Home Screen" banner appears automatically after 10s on eligible browsers. Dismissed state persists for 7 days.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#00e676"></div><div class="sm-feat-text"><strong>Offline caching</strong> — App shell pre-cached on install. Stale-while-revalidate for static assets. Network-first for API calls with offline fallback.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#FFD700"></div><div class="sm-feat-text"><strong>Screen Wake Lock</strong> — Prevents screen from sleeping during an active game. Automatically released on game over or tab hide.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#ff6b00"></div><div class="sm-feat-text"><strong>Push Notifications</strong> — VAPID web push for game matched, win/loss, deposit/withdrawal confirmation, premium expiry alerts.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#c0c0d0"></div><div class="sm-feat-text"><strong>Haptic Feedback</strong> — Vibration API called on every tap (8ms) and victory pattern on win. Opt-in based on device support.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen-modal" id="m-pay-modal">
+  <div class="screen-modal-inner">
+    <div class="sm-header"><div class="sm-title">PAYMENTS + PREMIUM</div><button class="sm-close" onclick="closeModal('m-pay-modal')">✕</button></div>
+    <div class="sm-body">
+      <div class="sm-desc">Ghana-native payment integrations for deposits and withdrawals, plus Stripe for international card payments. Premium subscription tiers gate multiplier features.</div>
+      <div class="sm-feat-list">
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#FFD700"></div><div class="sm-feat-text"><strong>MTN Mobile Money</strong> — Prompt-to-pay via MTN MoMo API. Webhook confirms payment before balance credit.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#ff3d57"></div><div class="sm-feat-text"><strong>Vodafone Cash + AirtelTigo</strong> — Same prompt-to-pay flow for Voda and Airtel providers. All three support deposits and withdrawals.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#4fc3f7"></div><div class="sm-feat-text"><strong>Stripe</strong> — Card payments via Stripe PaymentIntents. Webhooks confirm charges before balance is updated.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#cd7f32"></div><div class="sm-feat-text"><strong>Premium tiers</strong> — Silver (GH₵29), Bronze (GH₵49), Gold (GH₵79). Monthly. Unlock ×2, ×3, ×4 in-game multipliers respectively.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#00e676"></div><div class="sm-feat-text"><strong>Transaction history</strong> — All deposits, withdrawals, stakes, winnings, and premium purchases logged in DB and visible in-app and in admin.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen-modal" id="m-result-modal">
+  <div class="screen-modal-inner">
+    <div class="sm-header"><div class="sm-title">GAME RESULT</div><button class="sm-close" onclick="closeModal('m-result-modal')">✕</button></div>
+    <div class="sm-body">
+      <div class="sm-desc">Post-game modal showing the outcome with full score breakdown, payout amount, and social sharing. Three distinct states: win, loss, and draw.</div>
+      <div class="sm-feat-list">
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#00e676"></div><div class="sm-feat-text"><strong>Win state</strong> — Green header, confetti particle burst, vibration pattern, "+GH₵X" payout display. Balance updated server-side and reflected immediately.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#ff3d57"></div><div class="sm-feat-text"><strong>Loss state</strong> — Red header, "-GH₵X" stake shown. Encourages retry. No balance change (stake already deducted at game start).</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#FFD700"></div><div class="sm-feat-text"><strong>Draw state</strong> — Gold header, "±0" shown, both stakes returned server-side to balance.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#4fc3f7"></div><div class="sm-feat-text"><strong>Share button</strong> — Triggers the Web Share API for native OS share sheet. Falls back to clipboard copy on unsupported browsers.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen-modal" id="m-lb-modal">
+  <div class="screen-modal-inner">
+    <div class="sm-header"><div class="sm-title">LEADERBOARD & HISTORY</div><button class="sm-close" onclick="closeModal('m-lb-modal')">✕</button></div>
+    <div class="sm-body">
+      <div class="sm-desc">Global leaderboard ranking players by total wins. Current user is highlighted in green. Game history shows your last 20 matches with opponent name, scores, stake, and payout.</div>
+      <div class="sm-feat-list">
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#FFD700"></div><div class="sm-feat-text"><strong>Leaderboard</strong> — Top players ranked by total wins. 🥇🥈🥉 icons for top 3. Your row highlighted. Loaded from <code>GET /api/games/leaderboard</code>.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#00e676"></div><div class="sm-feat-text"><strong>Game History</strong> — Last 20 matches for the logged-in user. Shows WIN/LOSS/DRAW badge, opponent name, tap scores, stake amount, and net payout.</div></div>
+        <div class="sm-feat"><div class="sm-feat-dot" style="background:#4fc3f7"></div><div class="sm-feat-text"><strong>Accessible from menu</strong> — Both screens are overlays accessible from the hamburger menu. Loaded lazily on open.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <script>
-'use strict';
+// ── Particle canvas ──
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
 
-// ════════════════════════════════════════════════
-// CONFIG — set window.BB_API before this script,
-// or it defaults to same origin.
-// e.g. <script>window.BB_API = 'https://api.buzzerbet.com'</script>
-// ════════════════════════════════════════════════
-const API_BASE = (window.BB_API || '').replace(/\/$/, '');
-
-// ════════════════════════════════════════════════
-// STATE
-// ════════════════════════════════════════════════
-const state = {
-  // auth
-  token: null,
-  user: null,
-
-  // balance / premium
-  balance: 0,
-  premiumPlan: 'none', // none | silver | bronze | gold
-
-  // game
-  gamePhase: 'idle',   // idle | searching | playing | result
-  stake: 0,
-  gameId: null,
-  oppName: '',
-  score: 0,
-  oppScore: 0,
-  timer: 60,
-  timerInterval: null,
-
-  // multiplier
-  currentMult: 1,
-  multActive: false,
-  multUsed: false,
-  multTimer: null,
-
-  // search
-  searchSecs: 0,
-  searchInterval: null,
-
-  // socket
-  socket: null,
-
-  // payment providers
-  depositProvider: 'mtn',
-  withdrawProvider: 'mtn',
-};
-
-// ════════════════════════════════════════════════
-// TOKEN STORE
-// ════════════════════════════════════════════════
-const Token = {
-  get: () => localStorage.getItem('bb_token'),
-  set: t => localStorage.setItem('bb_token', t),
-  clear: () => localStorage.removeItem('bb_token'),
-};
-
-// ════════════════════════════════════════════════
-// DOM HELPERS
-// ════════════════════════════════════════════════
-const $ = id => document.getElementById(id);
-const el = {
-  balanceVal: $('balance-val'),
-  timerVal:   $('timer-value'),
-  statusDot:  $('status-dot'),
-  statusTxt:  $('status-text'),
-  scoreEl:    $('score-display'),
-  multLabel:  $('mult-label'),
-  buzzer:     $('buzzer'),
-  stakeBtn:   $('stake-btn'),
-  vsEl:       $('vs-badge'),
-  oppInline:  $('opp-score-inline'),
-  oppNameEl:  $('opp-name-display'),
-};
-
-function showOverlay(id) { $(id).classList.add('show'); }
-function hideOverlay(id) { $(id).classList.remove('show'); }
-
-// ════════════════════════════════════════════════
-// TOAST
-// ════════════════════════════════════════════════
-function showToast(msg, color = 'gold') {
-  const colors = { gold: 'var(--gold)', green: 'var(--green)', red: 'var(--red)' };
-  const t = document.createElement('div');
-  t.style.cssText = `
-    position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
-    background:rgba(10,10,20,0.95);border:1.5px solid ${colors[color] || colors.gold};
-    border-radius:999px;padding:10px 24px;
-    font-family:Rajdhani;font-size:14px;font-weight:600;letter-spacing:1px;
-    color:${colors[color] || colors.gold};z-index:5000;white-space:nowrap;
-    backdrop-filter:blur(8px);pointer-events:none;
-    animation:toast-in 0.3s ease, toast-out 0.3s ease 1.7s forwards;
-  `;
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2200);
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = document.getElementById('hero').offsetHeight;
 }
-const _toastStyle = document.createElement('style');
-_toastStyle.textContent = `
-  @keyframes toast-in { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-  @keyframes toast-out { to{opacity:0;transform:translateX(-50%) translateY(-10px)} }
-`;
-document.head.appendChild(_toastStyle);
+resize();
+window.addEventListener('resize', resize);
 
-// ════════════════════════════════════════════════
-// API CLIENT
-// ════════════════════════════════════════════════
-async function apiFetch(path, opts = {}) {
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(state.token ? { Authorization: `Bearer ${state.token}` } : {}),
-    ...opts.headers,
-  };
-  const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
-  if (res.status === 401) {
-    Token.clear();
-    showAuthScreen();
-    throw new Error('Session expired');
-  }
-  let data;
-  try { data = await res.json(); } catch { data = {}; }
-  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-  return data;
-}
-
-// ════════════════════════════════════════════════
-// UPDATE UI
-// ════════════════════════════════════════════════
-function updateBalance(newBalance) {
-  if (newBalance !== undefined) state.balance = newBalance;
-  const fmt = state.balance.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  el.balanceVal.textContent = `GH₵${fmt}`;
-  $('stake-balance-display').textContent = `GH₵${fmt}`;
-  $('withdraw-balance-display').textContent = `GH₵${fmt}`;
-}
-
-function applyPremiumPlan(plan) {
-  state.premiumPlan = plan;
-  const planMap = { none: 1, silver: 2, bronze: 3, gold: 4 };
-  const maxMult = planMap[plan] || 1;
-  document.querySelectorAll('.mult-btn').forEach(btn => {
-    const m = parseInt(btn.dataset.mult);
-    if (m <= maxMult) btn.classList.remove('locked');
-    else btn.classList.add('locked');
+for (let i = 0; i < 80; i++) {
+  particles.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * 600,
+    r: Math.random() * 1.5 + 0.3,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    a: Math.random(),
   });
-  // Mark owned tiers
-  ['silver', 'bronze', 'gold'].forEach(p => {
-    const tier = $(`tier-${p}`);
-    if (!tier) return;
-    const owned = planMap[plan] >= planMap[p];
-    tier.classList.toggle('owned', owned);
-    const existing = tier.querySelector('.tier-badge');
-    if (owned && !existing) {
-      const badge = document.createElement('div');
-      badge.className = 'tier-badge';
-      badge.textContent = 'ACTIVE';
-      tier.appendChild(badge);
-    } else if (!owned && existing) {
-      existing.remove();
+}
+
+function animParts() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = canvas.width;
+    if (p.x > canvas.width) p.x = 0;
+    if (p.y < 0) p.y = canvas.height;
+    if (p.y > canvas.height) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,215,0,${p.a * 0.6})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(animParts);
+}
+animParts();
+
+// ── Counter animation ──
+function animateCount(el, target, duration = 1200) {
+  let start = null;
+  function step(ts) {
+    if (!start) start = ts;
+    const prog = Math.min((ts - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - prog, 3);
+    el.textContent = Math.floor(ease * target).toLocaleString();
+    if (prog < 1) requestAnimationFrame(step);
+    else el.textContent = target.toLocaleString();
+  }
+  requestAnimationFrame(step);
+}
+
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      animateCount(document.getElementById('s-lines'), 4200);
+      obs.disconnect();
     }
   });
-}
-
-// ════════════════════════════════════════════════
-// AUTH
-// ════════════════════════════════════════════════
-function showAuthScreen() {
-  $('auth-screen').classList.remove('hidden');
-  $('topbar').style.display = 'none';
-  $('main').style.display = 'none';
-}
-
-function hideAuthScreen() {
-  $('auth-screen').classList.add('hidden');
-  $('topbar').style.display = '';
-  $('main').style.display = '';
-}
-
-function switchTab(tab) {
-  $('tab-login').classList.toggle('active', tab === 'login');
-  $('tab-register').classList.toggle('active', tab === 'register');
-  $('form-login').classList.toggle('active', tab === 'login');
-  $('form-register').classList.toggle('active', tab === 'register');
-  $('login-error').classList.remove('show');
-  $('register-error').classList.remove('show');
-}
-
-function setAuthError(formId, msg) {
-  const el = $(formId + '-error');
-  el.textContent = msg;
-  el.classList.add('show');
-}
-
-async function doLogin() {
-  const email = $('login-email').value.trim();
-  const pass = $('login-pass').value;
-  if (!email || !pass) return setAuthError('login', 'Please fill in all fields');
-  $('login-btn').disabled = true;
-  $('login-btn').textContent = 'LOGGING IN…';
-  try {
-    const data = await apiFetch('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password: pass }),
-    });
-    Token.set(data.token);
-    state.token = data.token;
-    onLoggedIn(data.user);
-  } catch (err) {
-    setAuthError('login', err.message);
-  } finally {
-    $('login-btn').disabled = false;
-    $('login-btn').textContent = 'LOGIN';
-  }
-}
-
-async function doRegister() {
-  const username = $('reg-username').value.trim();
-  const email = $('reg-email').value.trim();
-  const phone = $('reg-phone').value.trim();
-  const pass = $('reg-pass').value;
-  if (!username || !email || !phone || !pass) return setAuthError('register', 'Please fill in all fields');
-  $('register-btn').disabled = true;
-  $('register-btn').textContent = 'CREATING…';
-  try {
-    const data = await apiFetch('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ username, email, phone, password: pass }),
-    });
-    Token.set(data.token);
-    state.token = data.token;
-    onLoggedIn(data.user);
-  } catch (err) {
-    setAuthError('register', err.message);
-  } finally {
-    $('register-btn').disabled = false;
-    $('register-btn').textContent = 'CREATE ACCOUNT';
-  }
-}
-
-function onLoggedIn(user) {
-  state.user = user;
-  state.token = Token.get();
-  updateBalance(parseFloat(user.balance) || 0);
-  applyPremiumPlan(user.premium_plan || 'none');
-  hideAuthScreen();
-  initSocket();
-  showToast(`Welcome back, ${user.username}!`, 'gold');
-  // Request wake lock + push subscription via PWA module
-  if (window.BuzzerPWA) {
-    BuzzerPWA.requestWakeLock();
-    // Delay push prompt so it doesn't fire immediately on login
-    setTimeout(() => BuzzerPWA.subscribePush(state.token), 5000);
-  }
-}
-
-async function checkExistingSession() {
-  const token = Token.get();
-  if (!token) return false;
-  state.token = token;
-  try {
-    const user = await apiFetch('/api/auth/profile');
-    onLoggedIn(user);
-    return true;
-  } catch {
-    Token.clear();
-    return false;
-  }
-}
-
-function doLogout() {
-  if (state.socket) state.socket.disconnect();
-  state.socket = null;
-  state.token = null;
-  state.user = null;
-  Token.clear();
-  resetGameState();
-  showAuthScreen();
-  showToast('Logged out', 'gold');
-}
-
-// ════════════════════════════════════════════════
-// SOCKET.IO — REAL-TIME GAME
-// ════════════════════════════════════════════════
-function initSocket() {
-  if (state.socket) state.socket.disconnect();
-
-  state.socket = io(API_BASE || window.location.origin, {
-    auth: { token: state.token },
-    transports: ['websocket', 'polling'],
-    reconnection: true,
-    reconnectionAttempts: 10,
-    reconnectionDelay: 1000,
-    reconnectionDelayMax: 10000,
-    timeout: 10000,
-  });
-
-  const s = state.socket;
-
-  s.on('connect', () => {
-    setStatus('connected', 'ONLINE');
-    hideNetworkBanner();
-  });
-
-  s.on('disconnect', reason => {
-    setStatus('error', 'OFFLINE');
-    showNetworkBanner('offline', '📡 RECONNECTING…');
-    if (state.gamePhase === 'playing') {
-      showToast('Connection lost — taps buffered', 'gold');
-    }
-  });
-
-  s.on('reconnect', () => {
-    setStatus('connected', 'ONLINE');
-    hideNetworkBanner();
-    showToast('Reconnected!', 'green');
-  });
-
-  s.on('connect_error', err => {
-    setStatus('error', 'ERROR');
-    console.error('[Socket] Connect error:', err.message);
-  });
-
-  // ── MATCHMAKING ──
-  s.on('matchmaking:searching', ({ stake }) => {
-    // confirmed by server
-  });
-
-  s.on('matchmaking:found', ({ opponent }) => {
-    state.oppName = opponent;
-    showToast(`Opponent found: ${opponent}!`, 'green');
-  });
-
-  s.on('matchmaking:timeout', ({ message }) => {
-    hideOverlay('searching-overlay');
-    clearSearchTimer();
-    // Refund handled server-side; refresh balance
-    refreshBalance();
-    resetToIdle();
-    showToast('No opponent found. Stake refunded.', 'gold');
-  });
-
-  s.on('matchmaking:cancelled', () => {
-    hideOverlay('searching-overlay');
-    clearSearchTimer();
-    refreshBalance();
-    resetToIdle();
-  });
-
-  s.on('matchmaking:error', ({ message }) => {
-    hideOverlay('searching-overlay');
-    clearSearchTimer();
-    refreshBalance();
-    resetToIdle();
-    showToast(message, 'red');
-  });
-
-  // ── GAME START ──
-  s.on('game:start', ({ gameId, opponentName, stake, duration }) => {
-    state.gameId = gameId;
-    state.oppName = opponentName;
-    state.stake = stake;
-    hideOverlay('searching-overlay');
-    clearSearchTimer();
-    startGame(duration);
-  });
-
-  // ── SCORE UPDATES ──
-  s.on('game:score_update', ({ score }) => {
-    state.score = score;
-    el.scoreEl.textContent = score;
-    el.scoreEl.classList.remove('tapped');
-    void el.scoreEl.offsetWidth;
-    el.scoreEl.classList.add('tapped');
-  });
-
-  s.on('game:opp_score', ({ score }) => {
-    state.oppScore = score;
-    el.oppInline.innerHTML = `OPP: <b>${score}</b>`;
-  });
-
-  // ── MULTIPLIER ──
-  s.on('game:mult_activated', ({ mult }) => {
-    state.currentMult = mult;
-    state.multActive = true;
-    state.multUsed = true;
-    el.multLabel.textContent = `×${mult} ACTIVE — 30s`;
-    startMultCountdown(30);
-  });
-
-  s.on('game:mult_expired', () => {
-    state.currentMult = 1;
-    state.multActive = false;
-    document.querySelectorAll('.mult-btn').forEach(b => b.classList.remove('active'));
-    $('mult-x1').classList.add('active');
-    el.multLabel.textContent = '';
-  });
-
-  // ── GAME OVER ──
-  s.on('game:over', result => {
-    clearGameTimer();
-    showResult(result);
-  });
-
-  s.on('game:opponent_disconnected', ({ message }) => {
-    showToast(message, 'green');
-  });
-
-  s.on('game:error', ({ message }) => {
-    showToast(message, 'red');
-  });
-}
-
-function setStatus(cls, text) {
-  el.statusDot.className = cls;
-  el.statusTxt.textContent = text;
-}
-
-// ════════════════════════════════════════════════
-// MENU
-// ════════════════════════════════════════════════
-$('menu-btn').addEventListener('click', e => {
-  $('menu-popup').classList.toggle('show');
-  e.stopPropagation();
 });
-document.addEventListener('click', () => $('menu-popup').classList.remove('show'));
-$('menu-popup').addEventListener('click', e => e.stopPropagation());
+obs.observe(document.getElementById('hero'));
+animateCount(document.getElementById('s-lines'), 4200);
 
-$('menu-deposit').addEventListener('click', () => { closeMenu(); showOverlay('deposit-overlay'); });
-$('menu-withdraw').addEventListener('click', () => { closeMenu(); showOverlay('withdraw-overlay'); });
-$('menu-premium').addEventListener('click', () => { closeMenu(); showOverlay('premium-overlay'); });
-$('menu-leaderboard').addEventListener('click', () => { closeMenu(); openLeaderboard(); });
-$('menu-history').addEventListener('click', () => { closeMenu(); openHistory(); });
-$('menu-logout').addEventListener('click', () => { closeMenu(); doLogout(); });
-function closeMenu() { $('menu-popup').classList.remove('show'); }
+// ── Live game demo ──
+let score = 0, oppScore = 0, timer = 60, multLabel = false;
+const mockScore = document.getElementById('mock-score');
+const mockOpp = document.getElementById('mock-opp');
+const mockTimer = document.getElementById('mock-timer');
+const mockMultLabel = document.getElementById('mock-mult-label');
+const mockBuzzer = document.getElementById('mock-buzzer');
 
-// ════════════════════════════════════════════════
-// DEPOSIT
-// ════════════════════════════════════════════════
-$('deposit-cancel').addEventListener('click', () => {
-  hideOverlay('deposit-overlay');
-  $('deposit-input').value = '';
-  $('deposit-phone').value = '';
-  $('deposit-error').classList.remove('show');
-});
-
-$('deposit-confirm').addEventListener('click', async () => {
-  const amt = parseFloat($('deposit-input').value);
-  const phone = $('deposit-phone').value.trim();
-  const provider = state.depositProvider;
-
-  if (!amt || amt < 1) return showFieldError('deposit', 'Enter a valid amount (min GH₵1)');
-  if (!phone) return showFieldError('deposit', 'Enter your mobile money number');
-
-  $('deposit-confirm').disabled = true;
-  $('deposit-confirm').textContent = 'PROCESSING…';
-
-  try {
-    const data = await apiFetch('/api/payments/deposit', {
-      method: 'POST',
-      body: JSON.stringify({ amount: amt, provider, phone }),
-    });
-    hideOverlay('deposit-overlay');
-    $('deposit-input').value = '';
-    $('deposit-phone').value = '';
-    showToast(`Deposit initiated via ${provider.toUpperCase()} — check your phone!`, 'green');
-    // Poll for balance update
-    setTimeout(refreshBalance, 5000);
-    setTimeout(refreshBalance, 15000);
-  } catch (err) {
-    showFieldError('deposit', err.message);
-  } finally {
-    $('deposit-confirm').disabled = false;
-    $('deposit-confirm').textContent = 'DEPOSIT';
-  }
-});
-
-// ════════════════════════════════════════════════
-// WITHDRAW
-// ════════════════════════════════════════════════
-$('withdraw-cancel').addEventListener('click', () => {
-  hideOverlay('withdraw-overlay');
-  $('withdraw-input').value = '';
-  $('withdraw-phone').value = '';
-  $('withdraw-error').classList.remove('show');
-});
-
-$('withdraw-confirm').addEventListener('click', async () => {
-  const amt = parseFloat($('withdraw-input').value);
-  const phone = $('withdraw-phone').value.trim();
-  const provider = state.withdrawProvider;
-
-  if (!amt || amt < 1) return showFieldError('withdraw', 'Enter a valid amount');
-  if (amt > state.balance) return showFieldError('withdraw', 'Insufficient balance');
-  if (!phone) return showFieldError('withdraw', 'Enter your mobile money number');
-
-  $('withdraw-confirm').disabled = true;
-  $('withdraw-confirm').textContent = 'PROCESSING…';
-
-  try {
-    await apiFetch('/api/payments/withdraw', {
-      method: 'POST',
-      body: JSON.stringify({ amount: amt, provider, phone }),
-    });
-    hideOverlay('withdraw-overlay');
-    $('withdraw-input').value = '';
-    $('withdraw-phone').value = '';
-    showToast(`Withdrawal of GH₵${amt} initiated!`, 'gold');
-    await refreshBalance();
-  } catch (err) {
-    showFieldError('withdraw', err.message);
-  } finally {
-    $('withdraw-confirm').disabled = false;
-    $('withdraw-confirm').textContent = 'WITHDRAW';
-  }
-});
-
-function showFieldError(prefix, msg) {
-  const el = $(`${prefix}-error`);
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 4000);
-}
-
-function selectProvider(type, provider, btn) {
-  const container = type === 'deposit' ? $('deposit-providers') : btn.closest('.provider-select');
-  container.querySelectorAll('.provider-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  if (type === 'deposit') state.depositProvider = provider;
-  else state.withdrawProvider = provider;
-}
-
-// ════════════════════════════════════════════════
-// PREMIUM
-// ════════════════════════════════════════════════
-$('premium-cancel').addEventListener('click', () => {
-  hideOverlay('premium-overlay');
-  $('premium-error').classList.remove('show');
-});
-
-async function buyPremium(plan) {
-  const tier = $(`tier-${plan}`);
-  if (tier.classList.contains('owned')) {
-    showToast(`You already have ${plan} or higher!`, 'gold');
-    return;
-  }
-  tier.style.opacity = '0.6';
-  try {
-    const data = await apiFetch('/api/payments/premium', {
-      method: 'POST',
-      body: JSON.stringify({ plan }),
-    });
-    hideOverlay('premium-overlay');
-    applyPremiumPlan(plan);
-    updateBalance(data.newBalance ?? state.balance);
-    showToast(`${plan.charAt(0).toUpperCase() + plan.slice(1)} Premium activated! 🎉`, 'gold');
-  } catch (err) {
-    const errEl = $('premium-error');
-    errEl.textContent = err.message;
-    errEl.classList.add('show');
-  } finally {
-    tier.style.opacity = '';
-  }
-}
-
-// ════════════════════════════════════════════════
-// STAKE & MATCHMAKING
-// ════════════════════════════════════════════════
-function quickStake(amt) {
-  $('stake-input').value = amt;
-}
-
-el.stakeBtn.addEventListener('click', () => {
-  if (state.gamePhase !== 'idle') return;
-  updateBalance();
-  showOverlay('stake-overlay');
-});
-
-$('stake-cancel').addEventListener('click', () => {
-  hideOverlay('stake-overlay');
-  $('stake-input').value = '';
-});
-
-$('stake-confirm').addEventListener('click', () => {
-  const amt = parseFloat($('stake-input').value);
-  if (!amt || amt < 1) return showToast('Enter a valid amount (min GH₵1)', 'red');
-  if (amt > state.balance) return showToast('Insufficient balance', 'red');
-  if (!state.socket || !state.socket.connected) return showToast('Not connected to server', 'red');
-
-  state.stake = amt;
-  $('stake-input').value = '';
-  hideOverlay('stake-overlay');
-  beginMatchmaking(amt);
-});
-
-function beginMatchmaking(stake) {
-  state.gamePhase = 'searching';
-  setStatus('searching', 'SEARCHING');
-  el.stakeBtn.textContent = 'SEARCHING…';
-  el.stakeBtn.className = 'playing';
-  $('searching-stake').textContent = `GH₵${stake}`;
-  showOverlay('searching-overlay');
-
-  state.searchSecs = 0;
-  $('search-timer').textContent = '';
-  state.searchInterval = setInterval(() => {
-    state.searchSecs++;
-    $('search-timer').textContent = `${state.searchSecs}s elapsed`;
+let ticking = false;
+function startMockGame() {
+  if (ticking) return;
+  ticking = true;
+  score = 0; oppScore = 0; timer = 60;
+  const timerInterval = setInterval(() => {
+    timer = Math.max(0, timer - 1);
+    if (mockTimer) mockTimer.textContent = timer;
+    if (timer <= 0) clearInterval(timerInterval);
   }, 1000);
 
-  state.socket.emit('matchmaking:join', { stake });
-}
-
-$('cancel-search-btn').addEventListener('click', () => {
-  if (state.socket && state.socket.connected) {
-    state.socket.emit('matchmaking:cancel');
-  } else {
-    hideOverlay('searching-overlay');
-    clearSearchTimer();
-    resetToIdle();
-  }
-});
-
-function clearSearchTimer() {
-  clearInterval(state.searchInterval);
-  state.searchInterval = null;
-}
-
-// ════════════════════════════════════════════════
-// GAME LOGIC
-// ════════════════════════════════════════════════
-function startGame(duration) {
-  state.gamePhase = 'playing';
-  state.score = 0;
-  state.oppScore = 0;
-  state.timer = duration || 60;
-  state.multUsed = false;
-  state.currentMult = 1;
-  state.multActive = false;
-
-  el.scoreEl.textContent = '0';
-  el.multLabel.textContent = '';
-  el.timerVal.textContent = state.timer;
-  el.timerVal.classList.remove('urgent');
-
-  el.vsEl.style.display = 'block';
-  el.oppInline.innerHTML = 'OPP: <b>0</b>';
-  el.oppNameEl.textContent = state.oppName ? `vs ${state.oppName}` : '';
-
-  el.buzzer.classList.remove('disabled');
-  el.stakeBtn.textContent = 'PLAYING';
-  el.stakeBtn.className = 'playing';
-
-  document.querySelectorAll('.mult-btn').forEach(b => b.classList.remove('active'));
-  $('mult-x1').classList.add('active');
-
-  setStatus('found', 'PLAYING');
-
-  // Client-side countdown mirror
-  clearGameTimer();
-  state.timerInterval = setInterval(() => {
-    state.timer = Math.max(0, state.timer - 1);
-    el.timerVal.textContent = state.timer;
-    if (state.timer <= 10) el.timerVal.classList.add('urgent');
-    if (state.timer <= 0) {
-      clearGameTimer();
-      // Server will send game:over — just stop ticking
+  const tapInterval = setInterval(() => {
+    if (timer <= 0) { clearInterval(tapInterval); return; }
+    const inc = Math.floor(Math.random() * 4) + 2;
+    score += inc;
+    oppScore += Math.floor(Math.random() * 3) + 1;
+    if (mockScore) {
+      mockScore.textContent = score;
+      mockScore.style.animation = 'none';
+      void mockScore.offsetWidth;
+      mockScore.style.animation = '';
     }
-  }, 1000);
+    if (mockOpp) mockOpp.textContent = oppScore;
 
-  // Vibrate on game start (PWA haptic)
-  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-}
-
-function clearGameTimer() {
-  clearInterval(state.timerInterval);
-  state.timerInterval = null;
-}
-
-function resetToIdle() {
-  state.gamePhase = 'idle';
-  el.stakeBtn.textContent = 'STAKE';
-  el.stakeBtn.className = '';
-  el.statusDot.className = state.socket?.connected ? 'connected' : 'error';
-  el.statusTxt.textContent = state.socket?.connected ? 'ONLINE' : 'OFFLINE';
-}
-
-function resetGameState() {
-  clearGameTimer();
-  clearSearchTimer();
-  if (state.multTimer) clearTimeout(state.multTimer);
-  state.gamePhase = 'idle';
-  state.gameId = null;
-  state.stake = 0;
-  state.score = 0;
-  state.oppScore = 0;
-  state.timer = 60;
-  state.currentMult = 1;
-  state.multActive = false;
-  state.multUsed = false;
-  el.scoreEl.textContent = '0';
-  el.timerVal.textContent = '60';
-  el.timerVal.classList.remove('urgent');
-  el.multLabel.textContent = '';
-  el.vsEl.style.display = 'none';
-  el.oppNameEl.textContent = '';
-  el.buzzer.classList.add('disabled');
-  el.stakeBtn.textContent = 'STAKE';
-  el.stakeBtn.className = '';
-  document.querySelectorAll('.mult-btn').forEach(b => b.classList.remove('active'));
-  $('mult-x1').classList.add('active');
-}
-
-function showResult(result) {
-  const { won, tied, yourScore, oppScore, newBalance, stake } = result;
-
-  clearGameTimer();
-  state.gamePhase = 'result';
-  el.buzzer.classList.add('disabled');
-  el.vsEl.style.display = 'none';
-  el.timerVal.classList.remove('urgent');
-  el.timerVal.textContent = '0';
-  setStatus('connected', 'ONLINE');
-  el.stakeBtn.textContent = 'IDLE';
-  el.stakeBtn.className = 'playing';
-
-  $('result-your-score').textContent = yourScore;
-  $('result-opp-score').textContent = oppScore;
-  $('result-opp-name').textContent = state.oppName ? `vs ${state.oppName}` : '';
-  $('result-opp-name').style.cssText = 'font-size:13px;color:var(--text-muted);margin-bottom:8px;';
-
-  if (newBalance !== undefined) {
-    updateBalance(newBalance);
-    $('result-new-balance').textContent = `NEW BALANCE: GH₵${newBalance.toLocaleString('en-GH', { minimumFractionDigits: 2 })}`;
-  }
-
-  if (tied) {
-    $('result-title').textContent = "IT'S A TIE!";
-    $('result-title').style.color = 'var(--gold)';
-    $('result-sub').textContent = 'Your stake has been refunded.';
-    $('result-sub').style.color = 'var(--gold)';
-    if (navigator.vibrate) navigator.vibrate([200]);
-  } else if (won) {
-    $('result-title').textContent = '🏆 YOU WIN!';
-    $('result-title').style.color = 'var(--green)';
-    $('result-sub').textContent = `+GH₵${(stake || state.stake)} credited to your wallet!`;
-    $('result-sub').style.color = 'var(--green)';
-    confetti();
-    if (window.BuzzerPWA) BuzzerPWA.vibrateOnWin();
-    else if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 300]);
-  } else {
-    $('result-title').textContent = 'YOU LOST';
-    $('result-title').style.color = 'var(--red)';
-    $('result-sub').textContent = `GH₵${stake || state.stake} awarded to opponent.`;
-    $('result-sub').style.color = 'var(--text-muted)';
-    if (navigator.vibrate) navigator.vibrate([500]);
-  }
-
-  state.stake = 0;
-  showOverlay('result-overlay');
-}
-
-$('result-play-again').addEventListener('click', () => {
-  hideOverlay('result-overlay');
-  resetToIdle();
-  el.buzzer.classList.add('disabled');
-  el.scoreEl.textContent = '0';
-  el.timerVal.textContent = '60';
-  el.multLabel.textContent = '';
-  state.gameId = null;
-  document.querySelectorAll('.mult-btn').forEach(b => b.classList.remove('active'));
-  $('mult-x1').classList.add('active');
-});
-
-$('result-share').addEventListener('click', () => {
-  const yourScore = parseInt($('result-your-score').textContent);
-  const oppScore = parseInt($('result-opp-score').textContent);
-  const won = yourScore > oppScore;
-  const msg = won
-    ? `🏆 I just won on BuzzerBet! ${yourScore} vs ${oppScore} taps against ${state.oppName || 'opponent'}. Try it!`
-    : `🎮 Just played BuzzerBet — ${yourScore} vs ${oppScore} taps. Can you beat me?`;
-  if (navigator.share) {
-    navigator.share({ title: 'BuzzerBet', text: msg }).catch(() => {});
-  } else {
-    navigator.clipboard?.writeText(msg);
-    showToast('Copied to clipboard!', 'gold');
-  }
-});
-
-// ════════════════════════════════════════════════
-// MULTIPLIER BUTTONS
-// ════════════════════════════════════════════════
-document.querySelectorAll('.mult-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (btn.classList.contains('locked')) { showOverlay('premium-overlay'); return; }
-    if (state.gamePhase !== 'playing') return;
-    if (state.multUsed) { showToast('Multiplier already used!', 'red'); return; }
-
-    const mult = parseInt(btn.dataset.mult);
-    if (mult === 1) return;
-
-    // Send to server — server validates and confirms via game:mult_activated
-    if (state.socket && state.socket.connected) {
-      state.socket.emit('game:activate_mult', { gameId: state.gameId, mult });
-      document.querySelectorAll('.mult-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+    if (!multLabel && score > 30) {
+      multLabel = true;
+      if (mockMultLabel) mockMultLabel.textContent = '✦ ×2 ACTIVE — 28s';
     }
+  }, 220);
+}
+
+// Start demo on scroll
+const gameObs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting) startMockGame();
+}, { threshold: 0.3 });
+const gameCard = document.querySelector('.screen-card:nth-child(2)');
+if (gameCard) gameObs.observe(gameCard);
+
+// ── Modals ──
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close on backdrop click
+document.querySelectorAll('.screen-modal').forEach(m => {
+  m.addEventListener('click', e => {
+    if (e.target === m) { m.classList.remove('open'); document.body.style.overflow = ''; }
   });
 });
 
-function startMultCountdown(secs) {
-  let remaining = secs;
-  if (state.multTimer) clearTimeout(state.multTimer);
-  const tick = () => {
-    if (remaining > 0 && state.multActive) {
-      el.multLabel.textContent = `×${state.currentMult} ACTIVE — ${remaining}s`;
-      remaining--;
-      state.multTimer = setTimeout(tick, 1000);
-    }
-  };
-  tick();
-}
-
-// ════════════════════════════════════════════════
-// BUZZER TAP
-// ════════════════════════════════════════════════
-function handleTap(e) {
-  if (state.gamePhase !== 'playing') return;
-  e.preventDefault();
-
-  // Optimistic local update
-  const pts = state.currentMult;
-  state.score += pts;
-  el.scoreEl.textContent = state.score;
-  el.scoreEl.classList.remove('tapped');
-  void el.scoreEl.offsetWidth;
-  el.scoreEl.classList.add('tapped');
-
-  // Ripple
-  const ripple = document.createElement('div');
-  ripple.className = 'ripple';
-  el.buzzer.appendChild(ripple);
-  setTimeout(() => ripple.remove(), 500);
-
-  // Press animation
-  el.buzzer.classList.add('pressed');
-  setTimeout(() => el.buzzer.classList.remove('pressed'), 80);
-
-  // Haptic
-  if (window.BuzzerPWA) BuzzerPWA.vibrateOnTap();
-  else if (navigator.vibrate) navigator.vibrate(10);
-
-  // Send to server
-  if (state.socket && state.socket.connected) {
-    state.socket.emit('game:tap', { gameId: state.gameId });
-  }
-}
-
-el.buzzer.addEventListener('mousedown', handleTap);
-el.buzzer.addEventListener('touchstart', handleTap, { passive: false });
-
-// ════════════════════════════════════════════════
-// LEADERBOARD
-// ════════════════════════════════════════════════
-async function openLeaderboard() {
-  showOverlay('leaderboard-overlay');
-  $('lb-loading').style.display = 'block';
-  $('lb-list').innerHTML = '';
-
-  try {
-    const data = await apiFetch('/api/games/leaderboard');
-    $('lb-loading').style.display = 'none';
-    const players = data.leaderboard || data;
-    const myId = state.user?.id;
-
-    players.forEach((p, i) => {
-      const row = document.createElement('div');
-      const rankClasses = ['gold', 'silver', 'bronze'];
-      const isMe = p.id === myId;
-      row.className = `lb-row${isMe ? ' lb-me' : ''}`;
-      row.innerHTML = `
-        <div class="lb-rank ${i < 3 ? rankClasses[i] : ''}">${i < 3 ? ['🥇','🥈','🥉'][i] : i+1}</div>
-        <div class="lb-user">
-          <div class="lb-name">${p.username}${isMe ? ' (You)' : ''}</div>
-          <div class="lb-stat">${p.total_games || 0} games · ${p.total_wins || 0} wins</div>
-        </div>
-        <div class="lb-wins">${p.total_wins || 0}</div>
-      `;
-      $('lb-list').appendChild(row);
-    });
-
-    if (!players.length) {
-      $('lb-list').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">No players yet</div>';
-    }
-  } catch (err) {
-    $('lb-loading').textContent = 'Failed to load: ' + err.message;
-  }
-}
-
-$('lb-close').addEventListener('click', () => hideOverlay('leaderboard-overlay'));
-
-// ════════════════════════════════════════════════
-// GAME HISTORY
-// ════════════════════════════════════════════════
-async function openHistory() {
-  showOverlay('history-overlay');
-  $('hist-loading').style.display = 'block';
-  $('hist-list').innerHTML = '';
-
-  try {
-    const data = await apiFetch('/api/games/history?limit=20');
-    $('hist-loading').style.display = 'none';
-    const games = data.games || data;
-    const myId = state.user?.id;
-
-    games.forEach(g => {
-      const isP1 = g.player1_id === myId;
-      const myScore = isP1 ? g.player1_score : g.player2_score;
-      const oppScore = isP1 ? g.player2_score : g.player1_score;
-      const oppName = isP1 ? (g.player2_name || 'Opponent') : (g.player1_name || 'Opponent');
-      const won = g.winner_id === myId;
-      const tied = !g.winner_id && g.status === 'finished';
-      const result = tied ? 'tie' : (won ? 'win' : 'loss');
-      const resultText = tied ? 'DRAW' : (won ? 'WIN' : 'LOSS');
-      const stake = parseFloat(g.stake_amount).toFixed(2);
-      const payout = won ? `+GH₵${stake}` : (tied ? '±0' : `-GH₵${stake}`);
-      const date = g.finished_at ? new Date(g.finished_at).toLocaleDateString('en-GH', { month: 'short', day: 'numeric' }) : '';
-
-      const row = document.createElement('div');
-      row.className = 'hist-row';
-      row.innerHTML = `
-        <div class="hist-result ${result}">${resultText}</div>
-        <div class="hist-detail">
-          <div class="hist-opp">vs ${oppName}</div>
-          <div class="hist-score">${myScore} – ${oppScore} taps · GH₵${stake} stake</div>
-        </div>
-        <div>
-          <div class="hist-amount" style="color:${won ? 'var(--green)' : tied ? 'var(--gold)' : 'var(--red)'}">${payout}</div>
-          <div class="hist-date">${date}</div>
-        </div>
-      `;
-      $('hist-list').appendChild(row);
-    });
-
-    if (!games.length) {
-      $('hist-list').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">No games yet — place a stake to play!</div>';
-    }
-  } catch (err) {
-    $('hist-loading').textContent = 'Failed to load: ' + err.message;
-  }
-}
-
-$('hist-close').addEventListener('click', () => hideOverlay('history-overlay'));
-
-// ════════════════════════════════════════════════
-// REFRESH BALANCE
-// ════════════════════════════════════════════════
-async function refreshBalance() {
-  try {
-    const data = await apiFetch('/api/auth/profile');
-    updateBalance(parseFloat(data.balance));
-    if (data.premium_plan !== state.premiumPlan) {
-      applyPremiumPlan(data.premium_plan);
-    }
-  } catch (err) {
-    console.warn('Balance refresh failed:', err.message);
-  }
-}
-
-// ════════════════════════════════════════════════
-// NETWORK BANNER
-// ════════════════════════════════════════════════
-function showNetworkBanner(type, msg) {
-  const b = $('network-banner');
-  b.textContent = msg;
-  b.className = `show ${type}`;
-}
-function hideNetworkBanner() {
-  const b = $('network-banner');
-  b.classList.remove('show');
-}
-
-window.addEventListener('online', () => {
-  showNetworkBanner('online', '✓ BACK ONLINE');
-  setTimeout(hideNetworkBanner, 2000);
-});
-window.addEventListener('offline', () => {
-  showNetworkBanner('offline', '📡 OFFLINE — TAPS WILL SYNC');
-});
-
-// ════════════════════════════════════════════════
-// PWA — SERVICE WORKER + INSTALL
-// ════════════════════════════════════════════════
-let deferredInstallPrompt = null;
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            showToast('Update available — refresh to get it!', 'gold');
-          }
-        });
-      });
-    }).catch(err => console.warn('SW registration failed:', err));
-  });
-}
-
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
-  // Show install banner after 10s
-  setTimeout(() => {
-    if (deferredInstallPrompt) $('install-banner').classList.add('show');
-  }, 10000);
-});
-
-$('install-yes').addEventListener('click', async () => {
-  $('install-banner').classList.remove('show');
-  if (deferredInstallPrompt) {
-    deferredInstallPrompt.prompt();
-    const { outcome } = await deferredInstallPrompt.userChoice;
-    deferredInstallPrompt = null;
-    if (outcome === 'accepted') showToast('App installed!', 'green');
-  }
-});
-$('install-no').addEventListener('click', () => {
-  $('install-banner').classList.remove('show');
-  deferredInstallPrompt = null;
-});
-
-window.addEventListener('appinstalled', () => {
-  $('install-banner').classList.remove('show');
-  deferredInstallPrompt = null;
-  showToast('BuzzerBet installed! 🎉', 'green');
-});
-
-// Wake Lock — keep screen on during gameplay
-let wakeLock = null;
-async function requestWakeLock() {
-  try {
-    if ('wakeLock' in navigator) {
-      wakeLock = await navigator.wakeLock.request('screen');
-    }
-  } catch {}
-}
-async function releaseWakeLock() {
-  try { await wakeLock?.release(); wakeLock = null; } catch {}
-}
-
-// ════════════════════════════════════════════════
-// KEYBOARD SUPPORT (desktop)
-// ════════════════════════════════════════════════
+// Close on Escape
 document.addEventListener('keydown', e => {
-  if (e.code === 'Space' && state.gamePhase === 'playing') {
-    e.preventDefault();
-    handleTap(e);
-  }
-});
-
-// ════════════════════════════════════════════════
-// CONFETTI
-// ════════════════════════════════════════════════
-function confetti() {
-  const colors = ['#FFD700','#FFF176','#ff6b00','#00e676','#ffffff','#B8860B'];
-  for (let i = 0; i < 70; i++) {
-    const el = document.createElement('div');
-    el.className = 'confetti-piece';
-    el.style.left = Math.random() * 100 + 'vw';
-    el.style.top = '-10px';
-    el.style.background = colors[Math.floor(Math.random() * colors.length)];
-    el.style.animationDuration = (1 + Math.random() * 2) + 's';
-    el.style.animationDelay = Math.random() * 1 + 's';
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3500);
-  }
-}
-
-// ════════════════════════════════════════════════
-// ENTER KEY ON AUTH FORMS
-// ════════════════════════════════════════════════
-['login-email','login-pass'].forEach(id => {
-  $(id).addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-});
-['reg-username','reg-email','reg-phone','reg-pass'].forEach(id => {
-  $(id).addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
-});
-$('stake-input').addEventListener('keydown', e => { if (e.key === 'Enter') $('stake-confirm').click(); });
-
-// ════════════════════════════════════════════════
-// PERIODIC BALANCE REFRESH (every 2 min)
-// ════════════════════════════════════════════════
-setInterval(() => {
-  if (state.token && state.gamePhase === 'idle') refreshBalance();
-}, 120000);
-
-// ════════════════════════════════════════════════
-// BOOT
-// ════════════════════════════════════════════════
-async function boot() {
-  // Start with auth/main hidden
-  $('topbar').style.display = 'none';
-  $('main').style.display = 'none';
-
-  const loggedIn = await checkExistingSession();
-
-  if (!loggedIn) {
-    showAuthScreen();
-  }
-
-  // Fade out loading screen
-  setTimeout(() => {
-    $('loading-screen').classList.add('fade');
-    setTimeout(() => $('loading-screen').remove(), 500);
-  }, 800);
-
-  // Listen for SW messages (balance refresh, notification clicks)
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('message', e => {
-      if (e.data?.type === 'REFRESH_BALANCE') refreshBalance();
-      if (e.data?.type === 'NOTIFICATION_CLICK' && e.data.url) {
-        window.location.href = e.data.url;
-      }
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.screen-modal.open').forEach(m => {
+      m.classList.remove('open'); document.body.style.overflow = '';
     });
   }
-}
-
-boot();
+});
 </script>
 </body>
 </html>
